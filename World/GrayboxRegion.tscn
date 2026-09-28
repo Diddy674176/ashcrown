@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://ashcrown_graybox"]
+
+[ext_resource type="Script" path="res://World/GrayboxRegion.gd" id="1_gray"]
+
+[node name="GrayboxRegion" type="Node3D"]
+script = ExtResource("1_gray")
