@@ -4,7 +4,7 @@ Fully AFK-capable open-world action RPG for **mobile**, built in **Godot 4**.
 
 - **Title:** Ashcrown (final — not Aetherwake / Ashen Crown)
 - **Repo:** https://github.com/Diddy674176/ashcrown
-- **Status:** First Playable systems + creative locks landing — **NEXT: Godot 4 project scaffold**
+- **Status:** Design package landed · **Godot 4 Phase 1 scaffold in repo** (Emberveil Reach graybox)
 
 ## Docs
 
@@ -13,6 +13,7 @@ Fully AFK-capable open-world action RPG for **mobile**, built in **Godot 4**.
 | Design Bible | [docs/DESIGN_BIBLE.md](docs/DESIGN_BIBLE.md) | Studio |
 | Tone Bible | [docs/TONE.md](docs/TONE.md) | Creative Director |
 | Creative FP Pack | [docs/CREATIVE_FIRST_PLAYABLE.md](docs/CREATIVE_FIRST_PLAYABLE.md) | Creative Director |
+| Boss Fantasy (Coil Warden) | [docs/BOSS_COIL_WARDEN.md](docs/BOSS_COIL_WARDEN.md) | Creative Director |
 | World FP Package | [docs/WORLD_FIRST_PLAYABLE.md](docs/WORLD_FIRST_PLAYABLE.md) | World Builder |
 | Roadmap | [docs/ROADMAP.md](docs/ROADMAP.md) | Studio |
 | Systems | [docs/SYSTEMS.md](docs/SYSTEMS.md) | Game Designer |
@@ -23,9 +24,13 @@ Fully AFK-capable open-world action RPG for **mobile**, built in **Godot 4**.
 | Performance Budget | [docs/PERFORMANCE_BUDGET.md](docs/PERFORMANCE_BUDGET.md) | Studio |
 | First Playable (§2) | [docs/FIRST_PLAYABLE.md](docs/FIRST_PLAYABLE.md) | Studio |
 
-## NEXT
+## Phase 1 scaffold (what's playable vs stub)
 
-Godot 4 project scaffold (Android/iOS export presets, module folders per SYSTEMS, empty scenes for region/town/dungeon).
+**Playable in editor (Godot 4.3+):** open `project.godot` → run Main → walk graybox Emberveil Reach with keyboard (WASD + mouse look) or on-screen touch stick/buttons. Autosave stub on pause/close.
+
+**Stub only:** combat resolution, AFK offline sim, quests, loot, NPCs, Coilcrypt interior gameplay, Coil Warden fight, streaming load/unload, real art.
+
+**Locked names in scenes:** Emberveil Reach · Ashfen Gate · Coilcrypt · Coil Warden · Singing Root · Gray Concord waystone.
 
 ## License
 

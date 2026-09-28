@@ -64,14 +64,17 @@
 
 ## 5. Boss fantasy (CD brief for Combat)
 
-**The Coil Warden** — a Wake-warped guardian fused to a buried battery coil, feeding on Aether bleed. Choirbound: a wound. Wakewrights: an engine gone wrong. Player: a binding that must be sealed or broken.
+**Full lock:** [`BOSS_COIL_WARDEN.md`](BOSS_COIL_WARDEN.md) — aligned to Combat’s 2–3 phase template.
 
-**Phases (intent, not frame data):**
-1. **Coil sentinel** — readable telegraphs, teach conduit language.
-2. **Bleed surge** — arena aether vents; heat/Focus pressure (magic rules).
-3. **Crown echo** (optional short finale) — ash-light motif; drop fragment — never the full Ashcrown.
+**The Coil Warden** — Wake-primary guardian fused to a buried battery coil; Aether bleed as arena wound. Choirbound: a wound. Wakewrights: an engine gone wrong.
 
-**VFX:** Ember + conduit metal + aether bleed. No generic demon horns unless Wake-warped silhouette justifies it.
+| Phase | Combat template | Fantasy |
+|-------|-----------------|--------|
+| 1 | Learn 2–3 tells | **Coil sentinel** — amber/blue-white teaching tells |
+| 2 | Unblockable or arena hazard | **Bleed surge** — Aether vents + red coil overload |
+| 3 | Enrage / poise windows | **Crown echo** — ash-light motif; poise finish |
+
+**Lean:** Wake body · Aether hazards · ash-light finale. **Drop:** Ash-etched Circlet Fragment. Telegraph colors: Combat amber / blue-white / red — no conflict.
 
 ---
 
