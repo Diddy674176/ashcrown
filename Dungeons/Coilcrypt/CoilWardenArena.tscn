@@ -1,0 +1,35 @@
+[gd_scene load_steps=4 format=3 uid="uid://ashcrown_coilwarden"]
+
+[sub_resource type="CylinderMesh" id="Cyl_arena"]
+top_radius = 14.0
+bottom_radius = 14.0
+height = 1.0
+
+[sub_resource type="CylinderShape3D" id="CylShape_arena"]
+radius = 14.0
+height = 1.0
+
+[sub_resource type="StandardMaterial3D" id="Mat_arena"]
+albedo_color = Color(0.55, 0.28, 0.18, 1)
+
+[node name="CoilWardenArena" type="Node3D"]
+
+[node name="Arena" type="StaticBody3D" parent="."]
+
+[node name="Mesh" type="MeshInstance3D" parent="Arena"]
+mesh = SubResource("Cyl_arena")
+surface_material_override/0 = SubResource("Mat_arena")
+
+[node name="Collision" type="CollisionShape3D" parent="Arena"]
+shape = SubResource("CylShape_arena")
+
+[node name="BossSpawn" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
+
+[node name="PlayerEntry" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 10)
+
+[node name="Label" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6, 0)
+text = "The Coil Warden (arena stub)"
+font_size = 36
