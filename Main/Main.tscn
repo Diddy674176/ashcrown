@@ -1,6 +1,20 @@
-[gd_scene load_steps=2 format=3 uid="uid://ashcrown_main"]
+[gd_scene load_steps=6 format=3 uid="uid://ashcrown_main"]
 
 [ext_resource type="Script" path="res://Main/Main.gd" id="1_main"]
+[ext_resource type="PackedScene" uid="uid://ashcrown_emberveil" path="res://World/EmberveilReach/EmberveilReach.tscn" id="2_region"]
+[ext_resource type="PackedScene" uid="uid://ashcrown_player" path="res://Character/Player.tscn" id="3_player"]
+[ext_resource type="PackedScene" uid="uid://ashcrown_touch" path="res://UI/TouchControls.tscn" id="4_touch"]
+[ext_resource type="Script" path="res://Streaming/ChunkStreamer.gd" id="5_stream"]
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_main")
+
+[node name="EmberveilReach" parent="." instance=ExtResource("2_region")]
+
+[node name="Player" parent="." instance=ExtResource("3_player")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, 16)
+
+[node name="TouchControls" parent="." instance=ExtResource("4_touch")]
+
+[node name="ChunkStreamer" type="Node3D" parent="."]
+script = ExtResource("5_stream")
