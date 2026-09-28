@@ -1,15 +1,15 @@
 # Ashcrown — First Playable World Package
 
 **Owner:** World Builder  
-**Scope:** One streamed region for §2 vertical slice — town + wilderness + dungeon  
+**Scope:** One streamed region for §82 vertical slice — town + wilderness + dungeon  
 **Coherence:** DESIGN_BIBLE.md tone + magic; SYSTEMS.md living-world LOD; PERFORMANCE_BUDGET.md streaming  
-**Status:** LOCKED by Creative Director (Emberveil Reach) — iterate POIs, do not swap region without Bob
+**Status:** **CD-LOCKED** — Emberveil Reach / Ashfen Gate / Emberveil Wilds / Coilcrypt / Coil Warden. Alternates are backups only; do not swap without CD + Bob.
 
 **Do not use:** Aetherwake branding or multi-region sprawl until First Playable is green.
 
 ---
 
-## 1. Region lock (proposed)
+## 1. Region lock (CD-locked)
 
 | Field | Value |
 |-------|--------|
@@ -20,7 +20,7 @@
 | **Biome mix** | Primary: Aetherwood. Secondary: Vein marsh (wet, conductive). Tertiary stub: Heat-sink scar (small ruin strip toward dungeon) |
 | **Climate** | Cool dusk light most of day; brief clear noon; fog in vein marsh at dawn |
 
-**Alternates (if CD rejects):**  
+**Alternates (backups only — not active):**  
 - **Corehold Marches** — castle town over an orbital battery Core (more urban/faction politics).  
 - **Sandglass Verge** — desert of sandglass + heat-sink ruins (harsher traversal, stronger Wake-ruin fantasy).
 
@@ -108,7 +108,7 @@ Think a soft triangle the player can cross in active play in ~8–12 minutes wal
 
 ### Enemy roles (≥3 for slice)
 | Role | Example | Where |
-|------|---------|-------|
+|------|---------|--------|
 | **Trash skirmisher** | Vein-mite swarm | Aetherwood |
 | **Bruiser** | Wake-warped stag | Ridge / camps |
 | **Ranged / hazard** | Conduit wisp | Marsh + scar |
@@ -225,4 +225,3 @@ Other continents, floating Anchor Isles as playable, full Corehold politics, sai
 2. Write `WORLD_POI_BRIEF.md` (per-landmark art/gameplay one-pagers).  
 3. Hand chunk map sketch + naming sheet to Godot scaffold (`CREATIVE_FIRST_PLAYABLE.md` §6).  
 4. Align enemy/boss names with Combat Designer (Coil Warden fantasy locked).
-
