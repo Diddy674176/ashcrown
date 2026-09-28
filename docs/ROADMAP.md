@@ -91,4 +91,4 @@ See `FIRST_PLAYABLE.md`. **No Phase 5+ content sprawl** until that checklist is 
 1. Design docs (Ashcrown brand)  
 2. Studio bots + Ashcrown channel  
 3. Docs committed to https://github.com/Diddy674176/ashcrown  
-4. **Godot 4 project scaffold** (in progress)
+4. **Godot 4 project scaffold** (Phase 1 foundation)

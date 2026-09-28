@@ -42,7 +42,7 @@ Long ago, the **Veil** between spirit and machine tore. **Aether** (living mana-
 
 - **Aether** = animate energy that answers will, emotion, and ritual form.
 - **Wake** = patterned remnant tech that stores, channels, and amplifies Aether.
-- **Ashcrown** = the relic, the era, and the player’s path as a **Waker** who can bind both.
+- **Ashcrown** = the relic, the era, and the player's path as a **Waker** who can bind both.
 
 **Regions feel dual:** forests with crystalline conduits; castles built over orbital battery cores; deserts of sandglass and heat-sink ruins; floating isles held by gravity anchors.
 
@@ -53,7 +53,7 @@ Long ago, the **Veil** between spirit and machine tore. **Aether** (living mana-
 ## 4. Lore Spine (playable)
 
 ### Creation myth (player-facing short)
-The First Choir sang matter into shape. The Builders answered with machines that remembered songs. Pride broke the Veil; the world burned and remade. Nations now quarrel over **Cores** — Wake hearts still pulsing under cities — and over who may wear or claim the Ashcrown’s legacy.
+The First Choir sang matter into shape. The Builders answered with machines that remembered songs. Pride broke the Veil; the world burned and remade. Nations now quarrel over **Cores** — Wake hearts still pulsing under cities — and over who may wear or claim the Ashcrown's legacy.
 
 ### Current age
 - Fractured kingdoms and free cities compete for Core access.
