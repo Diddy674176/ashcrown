@@ -1,0 +1,28 @@
+# Godot 4
+.godot/
+.import/
+export/
+*.translation
+*.tmp
+*.temp
+*~
+.DS_Store
+Thumbs.db
+# Signing secrets — never commit
+*.keystore
+*.jks
+*.mobileprovision
+*.p12
+android/build/
+ios/build/
+# IDE
+.vscode/
+.idea/
+*.swp
+# Export binaries
+*.apk
+*.aab
+*.ipa
+*.pck
+*.zip
+mono_crash.*
