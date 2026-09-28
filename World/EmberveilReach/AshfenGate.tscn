@@ -1,0 +1,43 @@
+[gd_scene load_steps=4 format=3 uid="uid://ashcrown_ashfen"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_pad"]
+size = Vector3(40, 0.5, 40)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_pad"]
+size = Vector3(40, 0.5, 40)
+
+[sub_resource type="StandardMaterial3D" id="Mat_town"]
+albedo_color = Color(0.45, 0.38, 0.32, 1)
+
+[node name="AshfenGate" type="Node3D"]
+
+[node name="Pad" type="StaticBody3D" parent="."]
+
+[node name="Mesh" type="MeshInstance3D" parent="Pad"]
+mesh = SubResource("BoxMesh_pad")
+surface_material_override/0 = SubResource("Mat_town")
+
+[node name="Collision" type="CollisionShape3D" parent="Pad"]
+shape = SubResource("BoxShape3D_pad")
+
+[node name="Districts" type="Node3D" parent="."]
+
+[node name="GateYard" type="Marker3D" parent="Districts"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 15)
+
+[node name="MarketRing" type="Marker3D" parent="Districts"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 1, 0)
+
+[node name="LowerQuarters" type="Marker3D" parent="Districts"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 1, 0)
+
+[node name="ConcordHall" type="Marker3D" parent="Districts"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, -10)
+
+[node name="EastShrinePath" type="Marker3D" parent="Districts"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 1, 0)
+
+[node name="Label" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6, 0)
+text = "Ashfen Gate (stub)"
+font_size = 48
