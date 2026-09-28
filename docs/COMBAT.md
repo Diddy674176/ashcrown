@@ -123,7 +123,7 @@ Distinct silhouettes + telegraph language per role. Field trash must not require
 
 **CD lock:** `/workspace/ashcrown-docs/BOSS_COIL_WARDEN.md` · **Emberveil Reach** · dungeon **Coilcrypt**  
 **Fantasy:** Wake-forged guardian fused to a buried battery coil, feeding on Aether bleed (failed binding apex).  
-**Lean:** Wake-primary body/weapons/poise · Aether bleed as Phase 2 arena hazard · ash-light (ember/legacy) Phase 3 motif. One creature — not "magic half / gun half."  
+**Lean:** Wake-primary body/weapons/poise · Aether bleed as Phase 2 arena hazard · ash-light (ember/legacy) Phase 3 motif. One creature — not “magic half / gun half.”  
 **Unique drop:** **Ash-etched Circlet Fragment** (tease toward Ashcrown; never full relic in First Playable).  
 **Requirements:** 2–3 phases · readable tells · clearable on Manual; Full auto may stall/fail on late phases (fair AFK).
 
@@ -134,6 +134,14 @@ Distinct silhouettes + telegraph language per role. Field trash must not require
 | 1 | 100–60% | **Coil sentinel** — still on duty, testing | **Sweep Arc** (amber dodge coil arm), **Glyph Slam** (blue-white blockable), **Conduit Spit** (soft ranged) | Amber sweeps; blue-white slam; soft projectile | Dodge vs Block vocabulary |
 | 2 | 60–30% | **Bleed surge** — coil cracks; vents open | **Aether Vent** (arena hazard primary, amber→red bloom), **Coil Overload** ×1–2 (red Unblockable — dodge out) | Mesh/decal vents + red rupture crack | Space control; Focus/heat pressure |
 | 3 | 30–0% | **Crown echo** — ash-light on helm/circlet scar | Faster sentinel patterns; **enrage**; brief **poise windows** after overload stutter | Phase banner + sting; ash-light motif; punish on stagger | Commit skills/charged on poise break |
+
+**Telegraph notes (boss-specific):**
+
+- Silhouette first: metal guardian + coil spine readable at Mid before glow; Wake-metal frame stays through P3 (not particle soup).
+- Vents = cool Aether on hazard only; ember accents on hits / phase transitions.
+- Coil Overload is the teachable Unblockable for the slice; Assisted/Full auto must dodge (never “tank” it).
+- Phase transitions: banner + sting + short vulnerability (~1s) before new pattern pool.
+- Color language locked: amber dodge / blue-white block / red unblockable — no rainbow tells.
 
 **Boss rules:**
 
