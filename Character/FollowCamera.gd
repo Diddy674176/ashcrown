@@ -55,7 +55,6 @@ func _process(_delta: float) -> void:
 		_target.set_camera_yaw(_yaw)
 
 func _unhandled_input(event: InputEvent) -> void:
-	# Desktop editor fallback
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		add_orbit_delta(event.relative)
 	elif event is InputEventMouseButton:
