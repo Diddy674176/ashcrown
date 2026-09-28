@@ -12,7 +12,7 @@ signal jump_pressed
 signal interact_pressed
 
 @export var player_path: NodePath
-@export var camera_path: NodePath  ## unused when camera is on player; pinch goes to player
+@export var camera_path: NodePath
 
 var _player: Node = null
 var _stick_origin := Vector2.ZERO
@@ -21,7 +21,7 @@ var _look_touch_index := -1
 var _look_last := Vector2.ZERO
 var _pinch_ids: Array[int] = []
 var _pinch_start_dist := 0.0
-var _touch_pos: Dictionary = {}  # index -> Vector2
+var _touch_pos: Dictionary = {}
 
 @onready var _stick_base: Control = $Root/LeftStick
 @onready var _stick_knob: Control = $Root/LeftStick/Knob
