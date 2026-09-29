@@ -1,9 +1,9 @@
 extends Node
 const _Attributes = preload("res://Character/Attributes.gd")
 const _SkillNodes = preload("res://Character/SkillNodes.gd")
-## Corruption-safe autosave — position, combat, kit, quest, equip, companion, AFK.
+## Corruption-safe autosave — position, combat, kit, quest, equip, companion, AFK, world sim, factions.
 
-const SAVE_VERSION := 5
+const SAVE_VERSION := 6
 const SAVE_DIR := "user://saves"
 const SAVE_NAME := "autosave.json"
 const TEMP_NAME := "autosave.json.tmp"
@@ -35,6 +35,9 @@ var data: Dictionary = {
 	"level": 1,
 	"attr_sheet": {},
 	"skill_state": {},
+	"factions": {},
+	"world_sim": {},
+	"faction_synced_quest": false,
 }
 var _player: Node3D
 var _timer: Timer
@@ -104,6 +107,10 @@ func capture_from_player(player: Node3D) -> void:
 	var qm := get_node_or_null("/root/QuestManager")
 	if qm and qm.has_method("snapshot"):
 		data["quest"] = qm.snapshot()
+	var ws := get_node_or_null("/root/WorldSim")
+	if ws and ws.has_method("snapshot"):
+		data["world_sim"] = ws.snapshot()
+		data["factions"] = ws.factions.duplicate(true)
 
 func apply_player_transform(player: Node3D) -> void:
 	var p: Dictionary = data.get("player_position", {})
@@ -160,6 +167,12 @@ func apply_to_player(player: Node3D) -> void:
 	var qm := get_node_or_null("/root/QuestManager")
 	if qm and qm.has_method("apply_snapshot") and data.has("quest"):
 		qm.apply_snapshot(data.get("quest", {}))
+	var ws := get_node_or_null("/root/WorldSim")
+	if ws and ws.has_method("apply_snapshot"):
+		if data.has("world_sim") and typeof(data["world_sim"]) == TYPE_DICTIONARY:
+			ws.apply_snapshot(data.get("world_sim", {}))
+		if data.has("factions") and typeof(data["factions"]) == TYPE_DICTIONARY and not data["factions"].is_empty():
+			ws.factions = data["factions"].duplicate(true)
 
 func set_scene_id(id: String) -> void:
 	data["scene"] = id
