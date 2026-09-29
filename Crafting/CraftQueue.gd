@@ -21,7 +21,7 @@ const RECIPES := {
 	},
 }
 
-var queue: Array = []
+var queue: Array = []  # {recipe_id, remaining, output}
 var _player: Node = null
 
 func bind_player(p: Node) -> void:
@@ -57,15 +57,18 @@ func try_start(recipe_id: String, station: String) -> String:
 	if _player == null:
 		return "no_player"
 	var inputs: Dictionary = r.get("inputs", {})
+	# Check gold
 	var gold_need := int(inputs.get("gold", 0))
 	if "gold" in _player and int(_player.gold) < gold_need:
 		return "need_gold"
+	# Check items
 	for k in inputs.keys():
 		if k == "gold":
 			continue
 		var need := int(inputs[k])
 		if not _player.has_method("count_item") or _player.count_item(k) < need:
 			return "need_%s" % k
+	# Spend
 	if gold_need > 0:
 		_player.gold -= gold_need
 	for k in inputs.keys():

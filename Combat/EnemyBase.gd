@@ -51,6 +51,7 @@ func _ready() -> void:
 	_find_player()
 
 func _apply_role_defaults() -> void:
+	# Only fill if still generic defaults (callers may override after new())
 	match role:
 		Role.SKIRMISHER:
 			if display_name == "Enemy":
@@ -69,7 +70,7 @@ func _apply_role_defaults() -> void:
 		Role.BRUISER:
 			if display_name == "Enemy":
 				display_name = "Wake-warped Stag"
-			_base_color = Color(0.42, 0.38, 0.45)
+			_base_color = Color(0.42, 0.38, 0.45)  # Wake-metal wildlife
 			max_hp = 95.0
 			move_speed = 2.4
 			attack_range = 2.4
@@ -83,7 +84,7 @@ func _apply_role_defaults() -> void:
 		Role.CASTER:
 			if display_name == "Enemy":
 				display_name = "Conduit Wisp"
-			_base_color = Color(0.35, 0.55, 0.75)
+			_base_color = Color(0.35, 0.55, 0.75)  # cool Aether spill
 			max_hp = 48.0
 			move_speed = 2.0
 			attack_range = 9.0
@@ -136,6 +137,7 @@ func _build_visual() -> void:
 			shape.shape = cap
 			shape.position = Vector3(0, 0.5, 0)
 	add_child(shape)
+
 	_mesh = MeshInstance3D.new()
 	match role:
 		Role.BRUISER:
@@ -143,6 +145,7 @@ func _build_visual() -> void:
 			bm.size = Vector3(1.2, 2.0, 1.8)
 			_mesh.mesh = bm
 			_mesh.position = Vector3(0, 1.0, 0)
+			# Antler stubs
 			var a1 := MeshInstance3D.new()
 			var cyl := CylinderMesh.new()
 			cyl.top_radius = 0.05
@@ -175,6 +178,7 @@ func _build_visual() -> void:
 		mat.emission_energy_multiplier = 0.6
 	_mesh.material_override = mat
 	add_child(_mesh)
+
 	_label = Label3D.new()
 	_label.text = display_name
 	_label.position = Vector3(0, 2.4 if role == Role.BRUISER else 1.6, 0)
@@ -212,6 +216,7 @@ func _physics_process(delta: float) -> void:
 		velocity.z = move_toward(velocity.z, 0.0, move_speed)
 		move_and_slide()
 		return
+
 	match role:
 		Role.SKIRMISHER:
 			_ai_skirmisher(delta, to_player, dist)
@@ -221,9 +226,11 @@ func _physics_process(delta: float) -> void:
 			_ai_caster(delta, to_player, dist)
 
 func _ai_skirmisher(_delta: float, to_player: Vector3, dist: float) -> void:
+	# Flank + short leap (amber dodge tell)
 	var desired := attack_range * 0.8
 	if dist > desired + 0.4:
 		var dir := to_player.normalized()
+		# Sidestep bias
 		var side := Vector3(-dir.z, 0, dir.x) * (0.35 if int(Time.get_ticks_msec() / 800) % 2 == 0 else -0.35)
 		var move := (dir + side).normalized()
 		velocity.x = move.x * move_speed
@@ -238,6 +245,7 @@ func _ai_skirmisher(_delta: float, to_player: Vector3, dist: float) -> void:
 	move_and_slide()
 
 func _ai_bruiser(_delta: float, to_player: Vector3, dist: float) -> void:
+	# Slow approach, heavy blockable slam / occasional red grab
 	if dist > attack_range * 0.9:
 		var dir := to_player.normalized()
 		velocity.x = dir.x * move_speed
@@ -256,6 +264,7 @@ func _ai_bruiser(_delta: float, to_player: Vector3, dist: float) -> void:
 	move_and_slide()
 
 func _ai_caster(_delta: float, to_player: Vector3, dist: float) -> void:
+	# Keep range, fire orbs + AoE seals
 	var ideal := 7.5
 	var dir := to_player.normalized() if to_player.length() > 0.1 else Vector3.FORWARD
 	if dist < ideal - 1.5:
@@ -279,10 +288,12 @@ func _ai_caster(_delta: float, to_player: Vector3, dist: float) -> void:
 	move_and_slide()
 
 func _do_leap_attack() -> void:
+	# Amber dodge leap
 	_Telegraph.spawn(get_parent(), global_position, _Telegraph.Kind.DODGE_AMBER, 0.5, 1.6)
 	await get_tree().create_timer(0.5).timeout
 	if _dead or _player == null or not is_instance_valid(_player):
 		return
+	# Leap toward player
 	var to := _player.global_position - global_position
 	to.y = 0.0
 	if to.length() > 0.1:
@@ -292,6 +303,7 @@ func _do_leap_attack() -> void:
 			_player.receive_hit(attack_damage, self)
 
 func _do_heavy_slam() -> void:
+	# Blue-white blockable
 	_Telegraph.spawn(get_parent(), global_position, _Telegraph.Kind.BLOCK_BLUE, 0.65, 2.4)
 	await get_tree().create_timer(0.65).timeout
 	if _dead or _player == null or not is_instance_valid(_player):
@@ -304,6 +316,7 @@ func _do_heavy_slam() -> void:
 			_player.receive_hit(dmg, self)
 
 func _do_unblockable_grab() -> void:
+	# Red unblockable — must dodge
 	_Telegraph.spawn(get_parent(), global_position, _Telegraph.Kind.UNBLOCKABLE_RED, 0.7, 2.6)
 	if _label:
 		_label.text = "%s — UNBLOCKABLE" % display_name
@@ -317,6 +330,7 @@ func _do_unblockable_grab() -> void:
 			_player.receive_hit(attack_damage * 1.45, self)
 
 func _do_ranged_orb() -> void:
+	# Soft projectile tell — amber dodge line at player feet
 	if _player == null:
 		return
 	var pos := _player.global_position

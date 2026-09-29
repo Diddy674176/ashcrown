@@ -26,6 +26,7 @@ func apply_preset(name: String) -> void:
 	var p: Dictionary = PRESETS[name]
 	var scale := float(p["scale"])
 	get_tree().root.content_scale_factor = scale
+	# Prefer 3D stretch scale via viewport
 	var vp := get_viewport()
 	if vp:
 		vp.scaling_3d_scale = scale
@@ -41,6 +42,7 @@ func _apply_shadows() -> void:
 	var on := bool(PRESETS.get(current, {}).get("shadows", false))
 	if _sun and is_instance_valid(_sun):
 		_sun.shadow_enabled = on
+	# Also toggle any DirectionalLight3D in tree lightly
 	for n in get_tree().get_nodes_in_group("world_light"):
 		if n is DirectionalLight3D:
 			(n as DirectionalLight3D).shadow_enabled = on

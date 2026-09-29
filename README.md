@@ -4,7 +4,7 @@ Fully AFK-capable open-world action RPG for **mobile**, built in **Godot 4**.
 
 - **Title:** Ashcrown (final — not Aetherwake / Ashen Crown)
 - **Repo:** https://github.com/Diddy674176/ashcrown
-- **Status:** Design package landed · **Godot 4 Phase 1 scaffold in repo** (Emberveil Reach graybox)
+- **Status:** **First Playable 0.2.0 P0 green** — manual combat + 3 roles, Coil Warden 3-phase, AFK report voice · package `com.diddy674176.ashcrown`
 
 ## Docs
 
@@ -31,7 +31,7 @@ Fully AFK-capable open-world action RPG for **mobile**, built in **Godot 4**.
 
 **Playable in editor (Godot 4.3+):** open `project.godot` → run Main → walk graybox Emberveil Reach with keyboard (WASD + mouse look) or on-screen touch stick/buttons. Autosave stub on pause/close.
 
-**Stub only:** combat resolution, AFK offline sim, quests, loot, NPCs, Coilcrypt interior gameplay, Coil Warden fight, streaming load/unload, real art.
+**Playable on device (0.2.0 APK):** manual combat (light/heavy/dodge/block/skills + heat gate), Vein-mite / Wake-warped Stag / Conduit Wisp, Coil Warden 3 phases + Circlet Fragment, AFK EXP/Gold/Explore/Balanced + AFK_REPORT_VOICE return UI, Ashfen Len/vendors/Ember Camp, Assisted/Full Auto, Rook after Len, Mid/Battery Saver. Still stub/hidden: remappable controls UI, day/night schedules, dig/seal quest choice, cloud AFK, final art.
 
 **Locked names in scenes:** Emberveil Reach · Ashfen Gate · Coilcrypt · Coil Warden · Singing Root · Gray Concord waystone.
 

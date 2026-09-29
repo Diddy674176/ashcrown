@@ -1,14 +1,16 @@
 extends CharacterBody3D
 class_name CoilWardenBoss
+## Coil Warden — BOSS_COIL_WARDEN.md / COMBAT.md feel sheet.
+## P1 Coil sentinel · P2 Bleed surge (Aether vents) · P3 Crown echo (ash-light)
 
 const _CombatActor = preload("res://Combat/CombatActor.gd")
 const _Telegraph = preload("res://Combat/TelegraphDecal.gd")
-## Multi-phase Coil Warden - COMBAT.md / BOSS_COIL_WARDEN.md stub AI with readable tells.
 
 signal phase_changed(phase_id: String)
 signal defeated(drop: Dictionary)
 
-const UNIQUE_DROP := "Ash-etched Circlet Fragment"
+const UNIQUE_DROP := "ash_etched_circlet_fragment"
+const UNIQUE_DROP_NAME := "Ash-etched Circlet Fragment"
 const MAX_HP := 280.0
 
 var combat
@@ -16,10 +18,16 @@ var _player: Node3D
 var _phase: String = "coil_sentinel"
 var _pattern_cd: float = 1.5
 var _dead: bool = false
+var _busy: bool = false
 var _mesh: MeshInstance3D
+var _helm: MeshInstance3D
 var _label: Label3D
 var _phase_banner: Label3D
 var _enrage: bool = false
+var _vent_nodes: Array = []
+var _pattern_i: int = 0
+var _poise: float = 100.0
+var _stagger_until: float = 0.0
 
 func _ready() -> void:
 	add_to_group("enemy")
@@ -34,7 +42,7 @@ func _ready() -> void:
 	combat.died.connect(_on_died)
 	_build_visual()
 	_find_player()
-	_announce_phase("coil_sentinel", "Phase 1 - Coil Sentinel")
+	_announce_phase("coil_sentinel", "Phase 1 — Coil Sentinel")
 
 func _build_visual() -> void:
 	var shape := CollisionShape3D.new()
@@ -43,6 +51,7 @@ func _build_visual() -> void:
 	shape.shape = box
 	shape.position = Vector3(0, 1.6, 0)
 	add_child(shape)
+	# Wake-metal body
 	_mesh = MeshInstance3D.new()
 	var mesh := BoxMesh.new()
 	mesh.size = Vector3(2.0, 3.0, 2.0)
@@ -52,6 +61,7 @@ func _build_visual() -> void:
 	mat.albedo_color = Color(0.45, 0.42, 0.48)
 	_mesh.material_override = mat
 	add_child(_mesh)
+	# Coil spine
 	var spine := MeshInstance3D.new()
 	var cyl := CylinderMesh.new()
 	cyl.top_radius = 0.25
@@ -63,6 +73,17 @@ func _build_visual() -> void:
 	spine_mat.albedo_color = Color(0.7, 0.35, 0.2)
 	spine.material_override = spine_mat
 	add_child(spine)
+	# Helm / circlet scar (ash-light in P3)
+	_helm = MeshInstance3D.new()
+	var hm := SphereMesh.new()
+	hm.radius = 0.55
+	hm.height = 0.7
+	_helm.mesh = hm
+	_helm.position = Vector3(0, 3.1, 0.15)
+	var hm_mat := StandardMaterial3D.new()
+	hm_mat.albedo_color = Color(0.5, 0.48, 0.52)
+	_helm.material_override = hm_mat
+	add_child(_helm)
 	_label = Label3D.new()
 	_label.text = "The Coil Warden"
 	_label.position = Vector3(0, 3.8, 0)
@@ -93,13 +114,12 @@ func _physics_process(delta: float) -> void:
 		velocity.y -= 12.0 * delta
 	var to_p := _player.global_position - global_position
 	to_p.y = 0.0
-	if to_p.length() > 0.1:
-		var target := global_position + to_p.normalized()
-		look_at(target, Vector3.UP)
+	if to_p.length() > 0.1 and Time.get_ticks_msec() * 0.001 >= _stagger_until:
+		look_at(global_position + to_p.normalized(), Vector3.UP)
 	velocity.x = 0.0
 	velocity.z = 0.0
 	move_and_slide()
-	if _pattern_cd <= 0.0:
+	if _pattern_cd <= 0.0 and not _busy and Time.get_ticks_msec() * 0.001 >= _stagger_until:
 		_fire_pattern()
 
 func _update_phase() -> void:
@@ -115,18 +135,60 @@ func _update_phase() -> void:
 		_phase = next
 		match _phase:
 			"bleed_surge":
-				_announce_phase(_phase, "Phase 2 - Bleed Surge")
-				_pattern_cd = 1.2
+				_announce_phase(_phase, "Phase 2 — Bleed Surge")
+				_pattern_cd = 1.5
+				_spawn_aether_vents()
 				if _mesh and _mesh.material_override:
 					(_mesh.material_override as StandardMaterial3D).albedo_color = Color(0.35, 0.45, 0.55)
 			"crown_echo":
-				_announce_phase(_phase, "Phase 3 - Crown Echo")
+				_announce_phase(_phase, "Phase 3 — Crown Echo")
 				_enrage = true
-				_pattern_cd = 0.8
+				_pattern_cd = 1.2
+				_apply_ash_light()
 				if _mesh and _mesh.material_override:
 					(_mesh.material_override as StandardMaterial3D).albedo_color = Color(0.55, 0.32, 0.22)
 		phase_changed.emit(_phase)
-		_pattern_cd = maxf(_pattern_cd, 1.0)
+		# Short vulnerability window on phase transition
+		_stagger_until = Time.get_ticks_msec() * 0.001 + 1.0
+		_poise = 0.0
+
+func _apply_ash_light() -> void:
+	if _helm and _helm.material_override:
+		var m := _helm.material_override as StandardMaterial3D
+		m.emission_enabled = true
+		m.emission = Color(1.0, 0.55, 0.2)
+		m.emission_energy_multiplier = 1.4
+		m.albedo_color = Color(0.85, 0.55, 0.3)
+
+func _spawn_aether_vents() -> void:
+	# Cool Aether arena hazards — mesh/decal readable
+	for i in range(3):
+		var a := i * TAU / 3.0
+		var pos := global_position + Vector3(cos(a) * 7.0, 0.05, sin(a) * 7.0)
+		var vent := MeshInstance3D.new()
+		var cyl := CylinderMesh.new()
+		cyl.top_radius = 1.8
+		cyl.bottom_radius = 1.8
+		cyl.height = 0.12
+		vent.mesh = cyl
+		var mat := StandardMaterial3D.new()
+		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		mat.albedo_color = Color(0.25, 0.55, 0.85, 0.45)
+		mat.emission_enabled = true
+		mat.emission = Color(0.2, 0.5, 0.9)
+		mat.emission_energy_multiplier = 0.5
+		vent.material_override = mat
+		get_parent().add_child(vent)
+		vent.global_position = pos
+		_vent_nodes.append(vent)
+		var lbl := Label3D.new()
+		lbl.text = "Aether Vent"
+		lbl.font_size = 22
+		lbl.position = Vector3(0, 0.6, 0)
+		lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		lbl.modulate = Color(0.5, 0.75, 1.0)
+		vent.add_child(lbl)
 
 func _announce_phase(id: String, text: String) -> void:
 	if _phase_banner:
@@ -135,34 +197,61 @@ func _announce_phase(id: String, text: String) -> void:
 		EventBus.boss_phase_changed.emit(id, text)
 
 func _fire_pattern() -> void:
+	_busy = true
+	_pattern_i += 1
 	match _phase:
 		"coil_sentinel":
 			_pattern_cd = 2.2 if not _enrage else 1.4
-			await _pattern_sweep_or_slam()
+			# Rotate: Sweep Arc / Glyph Slam / Conduit Spit
+			var p := _pattern_i % 3
+			if p == 0:
+				await _pattern_sweep_arc()
+			elif p == 1:
+				await _pattern_glyph_slam()
+			else:
+				await _pattern_conduit_spit()
 		"bleed_surge":
 			_pattern_cd = 2.0
-			if randf() < 0.55:
-				await _pattern_aether_vent()
-			else:
+			if _pattern_i % 3 == 0:
 				await _pattern_coil_overload()
+			else:
+				await _pattern_aether_vent()
 		"crown_echo":
 			_pattern_cd = 1.35
-			if randf() < 0.4:
+			if _pattern_i % 4 == 0:
 				await _pattern_coil_overload()
+			elif _pattern_i % 2 == 0:
+				await _pattern_sweep_arc()
 			else:
-				await _pattern_sweep_or_slam()
+				await _pattern_glyph_slam()
+	_busy = false
 
-func _pattern_sweep_or_slam() -> void:
-	if randf() < 0.55:
-		_Telegraph.spawn(get_parent(), global_position + -transform.basis.z * 2.0, _Telegraph.Kind.DODGE_AMBER, 0.55, 3.0)
-		await get_tree().create_timer(0.55).timeout
-		_hit_players_in_radius(3.2, 14.0, "Sweep Arc")
-	else:
-		_Telegraph.spawn(get_parent(), global_position, _Telegraph.Kind.BLOCK_BLUE, 0.6, 2.4)
-		await get_tree().create_timer(0.6).timeout
-		_hit_players_in_radius(2.6, 18.0, "Glyph Slam", true)
+func _pattern_sweep_arc() -> void:
+	# Amber dodge — coil arm
+	_Telegraph.spawn(get_parent(), global_position + -transform.basis.z * 2.0,
+		_Telegraph.Kind.DODGE_AMBER, 0.55, 3.0)
+	await get_tree().create_timer(0.55).timeout
+	_hit_players_in_radius(3.2, 14.0, "Sweep Arc")
+
+func _pattern_glyph_slam() -> void:
+	# Blue-white blockable
+	_Telegraph.spawn(get_parent(), global_position, _Telegraph.Kind.BLOCK_BLUE, 0.6, 2.4)
+	await get_tree().create_timer(0.6).timeout
+	_hit_players_in_radius(2.6, 18.0, "Glyph Slam", true)
+
+func _pattern_conduit_spit() -> void:
+	# Soft ranged — amber dodge at player feet
+	if _player == null:
+		return
+	var pos := _player.global_position
+	pos.y = global_position.y
+	_Telegraph.spawn(get_parent(), pos, _Telegraph.Kind.DODGE_AMBER, 0.5, 1.5)
+	await get_tree().create_timer(0.5).timeout
+	if _player and is_instance_valid(_player) and _player.global_position.distance_to(pos) < 1.7:
+		_apply_hit(_player, 12.0, "Conduit Spit")
 
 func _pattern_aether_vent() -> void:
+	# Arena hazard AoE near player — amber→red bloom
 	if _player == null:
 		return
 	var pos := _player.global_position
@@ -171,15 +260,28 @@ func _pattern_aether_vent() -> void:
 	await get_tree().create_timer(0.85).timeout
 	if _player and is_instance_valid(_player) and _player.global_position.distance_to(pos) < 2.9:
 		_apply_hit(_player, 16.0, "Aether Vent")
+	# Also tick standing vents
+	for v in _vent_nodes:
+		if v == null or not is_instance_valid(v):
+			continue
+		if _player and _player.global_position.distance_to(v.global_position) < 2.0:
+			_apply_hit(_player, 8.0, "Vent Tick")
 
 func _pattern_coil_overload() -> void:
+	# Red Unblockable — must dodge
 	_Telegraph.spawn(get_parent(), global_position, _Telegraph.Kind.UNBLOCKABLE_RED, 0.7, 4.0)
 	if _phase_banner:
-		_phase_banner.text = "UNBLOCKABLE - DODGE!"
+		_phase_banner.text = "UNBLOCKABLE — DODGE!"
 	await get_tree().create_timer(0.7).timeout
 	_hit_players_in_radius(4.2, 28.0, "Coil Overload")
-	if _phase_banner and not _dead:
-		_phase_banner.text = "Phase 3 - Crown Echo" if _phase == "crown_echo" else "Phase 2 - Bleed Surge"
+	# Poise window after overload stutter (P3 lesson)
+	if _phase == "crown_echo":
+		_stagger_until = Time.get_ticks_msec() * 0.001 + 1.1
+		_poise = 0.0
+		if _phase_banner:
+			_phase_banner.text = "Poise window — PUNISH"
+	elif _phase_banner and not _dead:
+		_phase_banner.text = "Phase 2 — Bleed Surge"
 
 func _hit_players_in_radius(radius: float, damage: float, _pat: String, blockable: bool = false) -> void:
 	if _player == null or not is_instance_valid(_player):
@@ -199,22 +301,39 @@ func receive_hit(amount: float, source: Node = null) -> void:
 		return
 	if source == null:
 		return
-	var mult := 1.15 if _enrage else 1.0
+	var mult := 1.0
+	if _enrage:
+		mult = 1.15
+	if Time.get_ticks_msec() * 0.001 < _stagger_until:
+		mult *= 1.35  # punish window
 	combat.take_damage(amount * mult, source)
+	_poise = maxf(_poise - amount * 0.5, 0.0)
 	if _label:
 		_label.text = "Coil Warden  %d/%d" % [int(combat.hp), int(combat.max_hp)]
 
 func _on_died() -> void:
 	_dead = true
-	var drop := {"xp": 120, "gold": 80, "item": UNIQUE_DROP, "name": "The Coil Warden", "unique": true}
+	for v in _vent_nodes:
+		if v and is_instance_valid(v):
+			v.queue_free()
+	_vent_nodes.clear()
+	var drop := {
+		"xp": 120,
+		"gold": 80,
+		"item": UNIQUE_DROP,
+		"item_name": UNIQUE_DROP_NAME,
+		"name": "The Coil Warden",
+		"unique": true,
+		"rarity": "rare",
+	}
 	defeated.emit(drop)
 	if EventBus:
 		EventBus.enemy_killed.emit(self, drop)
 		EventBus.boss_defeated.emit(drop)
 	if _phase_banner:
-		_phase_banner.text = "DEFEATED - %s" % UNIQUE_DROP
+		_phase_banner.text = "DEFEATED — %s" % UNIQUE_DROP_NAME
 	if _label:
-		_label.text = "Ash-etched Circlet Fragment"
+		_label.text = UNIQUE_DROP_NAME
 	var tw := create_tween()
 	tw.tween_property(self, "scale", Vector3(1, 0.05, 1), 1.2)
 	tw.tween_callback(queue_free)

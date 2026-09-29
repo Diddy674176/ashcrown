@@ -24,15 +24,16 @@ const EMBER_CAMP_POS := Vector3(14, 0, 6)
 var active_profile: String = "Balanced"
 var running: bool = false
 var last_report: Dictionary = {}
-var mode: String = "foreground"
+var mode: String = "foreground"  # foreground | offline
 var _started_unix: float = 0.0
 var _timer: Timer
 var _acc_kills: int = 0
 var _acc_xp: int = 0
 var _acc_gold: int = 0
-var _acc_items: Array = []
+var _acc_items: Array = []  # {id, name, qty, rarity}
 var _acc_retreats: int = 0
 var _caps_hit: Array = []
+var _offline_pending_sec: float = 0.0
 
 func _ready() -> void:
 	_timer = Timer.new()
@@ -40,6 +41,7 @@ func _ready() -> void:
 	_timer.wait_time = SIM_INTERVAL_SEC
 	_timer.timeout.connect(_on_sim_tick)
 	add_child(_timer)
+	# Resume offline time from last save if AFK was left running
 	call_deferred("_check_offline_resume")
 
 func profiles() -> Array:
@@ -59,6 +61,7 @@ func cycle_profile() -> String:
 func start_afk(profile: String = "") -> void:
 	if profile != "":
 		set_profile(profile)
+	# Block AFK inside Coilcrypt / near boss
 	if _is_afk_blocked():
 		if EventBus:
 			EventBus.hud_toast.emit(STOP_STRINGS["afk_blocked"])
@@ -141,6 +144,7 @@ func _simulate_for_seconds(sec: int) -> void:
 			xp_pm = 22.0
 			gold_pm = 12.0
 			item_chance = 0.35
+	# Ember Camp radius bonus (safe farm)
 	if _near_ember_camp():
 		kills_pm *= 1.15
 		xp_pm *= 1.1
@@ -151,6 +155,7 @@ func _simulate_for_seconds(sec: int) -> void:
 		_acc_kills = maxi(_acc_kills, 1)
 		_acc_xp = maxi(_acc_xp, 3)
 		_acc_gold = maxi(_acc_gold, 2)
+	# Soft dim after long sessions
 	if sec > 120 * 60:
 		_caps_hit.append("soft_diminishing_120m")
 		_acc_xp = int(_acc_xp * 0.7)
@@ -205,6 +210,7 @@ func _human_duration(sec: int) -> String:
 		return "%d minutes" % m if s < 15 else "%d min %ds" % [m, s]
 	return "%dh %dm" % [m / 60, m % 60]
 
+## AFK_REPORT_VOICE.md — agent first-person field log
 func format_report_text(report: Dictionary = {}) -> String:
 	if report.is_empty():
 		report = last_report
@@ -269,19 +275,21 @@ func _check_offline_resume() -> void:
 	active_profile = str(SaveManager.data.get("afk_profile", "Balanced"))
 	mode = "offline"
 	_started_unix = started
-	_simulate_for_seconds(mini(elapsed, 4 * 3600))
+	_simulate_for_seconds(mini(elapsed, 4 * 3600))  # hard wall 4h
 	running = false
 	SaveManager.data["afk_running"] = false
 	last_report = _build_report(mini(elapsed, 4 * 3600), "complete_ok")
 	_grant_to_player()
 	SaveManager.data["last_afk_report"] = last_report.duplicate(true)
 	SaveManager.save()
+	# Defer UI toast so TouchControls can bind
 	await get_tree().create_timer(0.6).timeout
 	if EventBus:
 		EventBus.afk_stopped.emit(last_report)
 		EventBus.hud_toast.emit("Offline watch returned")
 
 func notification_paused() -> void:
+	# Hand off: keep timestamps; stop foreground timer (offline resolves on resume)
 	if running:
 		_timer.stop()
 		mode = "offline"

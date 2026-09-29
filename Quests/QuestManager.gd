@@ -3,15 +3,15 @@ extends Node
 
 const QUEST_ID := "len_scar_alarm"
 const STEPS := [
-	"talk_len",
-	"scout_wilds",
-	"report_len",
-	"done",
+	"talk_len",       # 0 accept
+	"scout_wilds",    # 1 kill 3 wilds enemies OR gather ember_fiber
+	"report_len",     # 2 turn-in
+	"done",           # 3 complete
 ]
 
 var stage: int = 0
 var kills_toward: int = 0
-var consequence_flag: String = ""
+var consequence_flag: String = ""  # helped_concord | ignored_scar
 var flags: Dictionary = {}
 
 func _ready() -> void:
@@ -72,6 +72,7 @@ func interact_len() -> String:
 			EventBus.hud_toast.emit("Len: Scout the Wilds. Kill 3 hostiles — or bring Ember Fiber.")
 		return "accepted"
 	if stage == 1:
+		# Player can ignore and still talk — soft nudge
 		if EventBus:
 			EventBus.hud_toast.emit("Len: Still waiting on that Wilds report.")
 		return "waiting"
@@ -91,6 +92,7 @@ func interact_len() -> String:
 	return ""
 
 func try_ignore_consequence() -> void:
+	# Alternate path if player never finishes — set when entering Coilcrypt without quest
 	if stage > 0 and stage < 3 and consequence_flag == "":
 		consequence_flag = "ignored_scar"
 		set_flag("ignored_scar_alarm", true)
@@ -100,15 +102,18 @@ func _on_enemy_killed(enemy: Node, _drops: Dictionary) -> void:
 		return
 	if enemy == null:
 		return
+	# Count wilds enemies (not boss)
 	if enemy.is_in_group("boss"):
 		return
-	kills_toward += 1
-	if EventBus:
-		EventBus.hud_toast.emit("Wilds progress %d/3" % kills_toward)
-	if kills_toward >= 3:
-		stage = 2
+	if enemy.is_in_group("wilds_enemy") or true:
+		# Count any non-boss kill during stage 1
+		kills_toward += 1
 		if EventBus:
-			EventBus.hud_toast.emit("Report to Magistrate Len")
+			EventBus.hud_toast.emit("Wilds progress %d/3" % kills_toward)
+		if kills_toward >= 3:
+			stage = 2
+			if EventBus:
+				EventBus.hud_toast.emit("Report to Magistrate Len")
 
 func notify_item_gained(item_id: String) -> void:
 	if stage == 1 and item_id == "ember_fiber":

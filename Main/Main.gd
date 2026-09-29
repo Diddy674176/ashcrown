@@ -20,7 +20,8 @@ func _ready() -> void:
 	EventBus.exit_dungeon_requested.connect(_exit_coilcrypt)
 	if SaveManager and not SaveManager.has_save():
 		player.global_position = Vector3(0, 1.2, 16)
-	EventBus.hud_toast.emit("Emberveil Reach - kill Vein-mites east · Coilcrypt north")
+	# Kit default Ashblade already on player; toast intro
+	EventBus.hud_toast.emit("Emberveil Reach — mites east · Coilcrypt north · MODE/AFK top-right")
 
 func _on_player_interact(p: Node) -> void:
 	if _in_dungeon:
@@ -37,11 +38,15 @@ func _on_enter_dungeon(dungeon_id: String) -> void:
 func _enter_coilcrypt() -> void:
 	if _in_dungeon:
 		return
+	var qm := get_node_or_null("/root/QuestManager")
+	if qm and qm.has_method("try_ignore_consequence"):
+		qm.try_ignore_consequence()
 	_in_dungeon = true
 	if region:
 		region.visible = false
+		# Disable region physics processing lightly
 		region.process_mode = Node.PROCESS_MODE_DISABLED
-	var ctrl_script = load("res://Dungeons/Coilcrypt/CoilcryptController.gd")
+	var ctrl_script: GDScript = load("res://Dungeons/Coilcrypt/CoilcryptController.gd") as GDScript
 	_dungeon = ctrl_script.new()
 	add_child(_dungeon)
 	player.global_position = _dungeon.get_player_entry()
@@ -60,7 +65,7 @@ func _exit_coilcrypt() -> void:
 	if region:
 		region.visible = true
 		region.process_mode = Node.PROCESS_MODE_INHERIT
-	player.global_position = Vector3(0, 1.2, -20)
+	player.global_position = Vector3(0, 1.2, -20)  # just outside mouth
 	if SaveManager:
 		SaveManager.set_scene_id("emberveil")
 		player.capture_to_save()
