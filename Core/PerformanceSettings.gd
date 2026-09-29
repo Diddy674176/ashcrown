@@ -1,38 +1,53 @@
 extends Node
-## Mid / Battery Saver quality toggles (PERFORMANCE_BUDGET.md).
+## Mid / Battery Saver presets — real resolution scale, shadows, FPS cap.
 
-const PRESETS := ["Mid", "Battery Saver", "Low"]
-var preset: String = "Mid"
-var _sun: DirectionalLight3D
+signal preset_changed(preset: String)
+
+var current: String = "Mid"
+var _sun: DirectionalLight3D = null
+
+const PRESETS := {
+	"High": {"scale": 1.0, "shadows": true, "fps": 60},
+	"Mid": {"scale": 0.85, "shadows": false, "fps": 45},
+	"Battery Saver": {"scale": 0.65, "shadows": false, "fps": 30},
+}
+
+func _ready() -> void:
+	apply_preset("Mid")
+
+func register_sun(light: DirectionalLight3D) -> void:
+	_sun = light
+	_apply_shadows()
+
+func apply_preset(name: String) -> void:
+	if not PRESETS.has(name):
+		name = "Mid"
+	current = name
+	var p: Dictionary = PRESETS[name]
+	var scale := float(p["scale"])
+	get_tree().root.content_scale_factor = scale
+	var vp := get_viewport()
+	if vp:
+		vp.scaling_3d_scale = scale
+	Engine.max_fps = int(p["fps"])
+	_apply_shadows()
+	preset_changed.emit(current)
+	if EventBus:
+		EventBus.hud_toast.emit("Graphics: %s (scale %.0f%% · %dfps)" % [
+			current, scale * 100.0, int(p["fps"])
+		])
+
+func _apply_shadows() -> void:
+	var on := bool(PRESETS.get(current, {}).get("shadows", false))
+	if _sun and is_instance_valid(_sun):
+		_sun.shadow_enabled = on
+	for n in get_tree().get_nodes_in_group("world_light"):
+		if n is DirectionalLight3D:
+			(n as DirectionalLight3D).shadow_enabled = on
 
 func cycle() -> String:
-	var i := PRESETS.find(preset)
-	if i < 0:
-		i = 0
-	preset = PRESETS[(i + 1) % PRESETS.size()]
-	apply_preset()
-	if EventBus:
-		EventBus.hud_toast.emit("Graphics: %s" % preset)
-	return preset
-
-func register_sun(sun: DirectionalLight3D) -> void:
-	_sun = sun
-	apply_preset()
-
-func apply_preset() -> void:
-	match preset:
-		"Battery Saver":
-			Engine.max_fps = 30
-			if _sun:
-				_sun.light_energy = 0.85
-				_sun.shadow_enabled = false
-		"Low":
-			Engine.max_fps = 30
-			if _sun:
-				_sun.light_energy = 0.9
-				_sun.shadow_enabled = false
-		_:
-			Engine.max_fps = 60
-			if _sun:
-				_sun.light_energy = 1.1
-				_sun.shadow_enabled = false
+	var order := ["High", "Mid", "Battery Saver"]
+	var i := order.find(current)
+	i = (i + 1) % order.size()
+	apply_preset(order[i])
+	return current
