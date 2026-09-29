@@ -1,7 +1,7 @@
 [gd_scene load_steps=6 format=3 uid="uid://ashcrown_main"]
 
 [ext_resource type="Script" path="res://Main/Main.gd" id="1_main"]
-[ext_resource type="PackedScene" uid="uid://ashcrown_emberveil" path="res://World/EmberveilReach/EmberveilReach.tscn" id="2_region"]
+[ext_resource type="PackedScene" uid="uid://ashcrown_emberveil" path="res://World/EmberveilReach.tscn" id="2_region"]
 [ext_resource type="PackedScene" uid="uid://ashcrown_player" path="res://Character/Player.tscn" id="3_player"]
 [ext_resource type="PackedScene" uid="uid://ashcrown_touch" path="res://UI/TouchControls.tscn" id="4_touch"]
 [ext_resource type="Script" path="res://Streaming/ChunkStreamer.gd" id="5_stream"]
