@@ -1,15 +1,15 @@
-# Ashcrown - Phase 1 + First Playable combat slice
+# Ashcrown — First Playable 0.2.0 (P0 device gates)
 
-## Playable now (debug APK 0.1.1)
-- Emberveil Reach graybox: Ashfen Gate, Waystone, Wilds, Coilcrypt mouth
-- Mobile touch: stick (deadzone), look swipe, hold ATK=heavy/charged, DODGE i-frames, BLOCK, S1/S2, JUMP, USE
-- Combat: HP/stamina/focus/heat; Vein-mites in Wilds (kill + stub loot)
-- Coilcrypt: USE at mouth -> dungeon arena; Coil Warden 3-phase stub AI with amber/blue/red telegraphs
-- Save: position, HP, kit, xp/gold persist
-- AFK toggle: Balanced profile; after ~8s shows return report (kills/xp/gold)
+## Playable now (debug APK 0.2.0 / versionCode 4)
+- **Manual combat:** light/heavy/charged, dodge i-frames, block, S1/S2; heat seals skill spam when overheated
+- **Combat modes:** Manual / Assisted / Full Auto share CombatBrain; soft-lock default ON (Lock button)
+- **3 enemy roles:** Vein-mite (skirmisher/amber leap), Wake-warped Stag (bruiser/block+red grab), Conduit Wisp (caster/orb+AoE)
+- **Coil Warden:** P1 Sweep/Glyph/Spit · P2 Aether vents + red Coil Overload · P3 Crown echo ash-light; unique **Ash-etched Circlet Fragment**
+- **AFK:** EXP / Gold / Explore / Balanced profiles; return report UI; offline resume
+- **Loop:** Ashfen Gate → Wilds → Coilcrypt → boss → return; town USE stubs
 
 ## Run
-Godot 4.3+ Play Main/Main.tscn, or install `build/ashcrown-debug.apk` (com.diddy674176.ashcrown).
+Godot 4.3+ Play `Main/Main.tscn`, or install `build/ashcrown-debug.apk` (`com.diddy674176.ashcrown`).
 
-## Not First Playable complete
-Town vendors/quests, companion, crafting, 3+ enemy roles, auto-combat, remappable controls, performance presets - see FIRST_PLAYABLE.md.
+## Still open / hidden
+Day/night NPC schedules, remappable controls UI, full dungeon Outer Ring teach rooms, quest dig/seal choice beat, cloud AFK — hidden, no fake buttons.
