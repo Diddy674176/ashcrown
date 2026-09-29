@@ -131,6 +131,7 @@ const TREES := {
 				"options": [
 					{"label": "Tell me about Ember Camp AFK.", "next": "afk"},
 					{"label": "What is the scar alarm?", "next": "scar"},
+					{"label": "Any Gate news?", "next": "world"},
 					{"label": "Nothing — just browsing.", "next": "", "effect": "end"},
 				],
 			},
@@ -145,6 +146,12 @@ const TREES := {
 				"text": "Sera: Len's scar alarm is a Wake tear. Helping Concord opens Rook; ignoring it cools Gate prices later.",
 				"options": [
 					{"label": "Noted.", "next": "", "effect": "end"},
+				],
+			},
+			"world": {
+				"text": "Sera: While you roam, Ashfen still ticks — patrol losses, market days, vein storms. Ask Vos after a long watch.",
+				"options": [
+					{"label": "I'll listen for the bells.", "next": "", "effect": "end"},
 				],
 			},
 		},
