@@ -27,3 +27,9 @@ signal player_interact(player: Node)
 signal enter_dungeon_requested(dungeon_id: String)
 signal exit_dungeon_requested
 signal hud_toast(text: String)
+signal player_leveled(level: int)
+signal inventory_changed
+signal attributes_changed
+signal skills_changed
+signal dialogue_opened(tree_id: String)
+signal dialogue_closed(tree_id: String)
