@@ -123,7 +123,7 @@ func _physics_process(delta: float) -> void:
 		_fire_pattern()
 
 func _update_phase() -> void:
-	var pct := combat.hp_pct()
+	var pct: float = combat.hp_pct()
 	var next := _phase
 	if pct > 0.6:
 		next = "coil_sentinel"

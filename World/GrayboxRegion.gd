@@ -391,19 +391,40 @@ func _do_len(_player: Node) -> void:
 			EventBus.hud_toast.emit("Len is offline at his house — return at dawn.")
 		return
 	var qm := get_node_or_null("/root/QuestManager")
+	var tree_id := "len_intro"
+	if qm and qm.has_method("dialogue_tree_for_len"):
+		tree_id = qm.dialogue_tree_for_len()
+	if _open_dialogue(tree_id):
+		return
 	if qm and qm.has_method("interact_len"):
 		qm.interact_len()
 	elif EventBus:
 		EventBus.hud_toast.emit(_bark("len"))
 
 func _do_sera(_player: Node) -> void:
+	if _open_dialogue("sera_archive"):
+		return
 	if EventBus:
 		EventBus.hud_toast.emit(_bark("sera"))
 
 func _do_cald(_player: Node) -> void:
+	if _open_dialogue("cald_shrine"):
+		return
 	if EventBus:
 		EventBus.hud_toast.emit(_bark("cald"))
 		EventBus.quest_flag_set.emit(&"met_cald", true)
+
+func _open_dialogue(tree_id: String) -> bool:
+	var dlg := get_tree().get_first_node_in_group("dialogue_panel")
+	if dlg == null:
+		# Search Main children
+		var main := get_tree().current_scene
+		if main:
+			dlg = main.get_node_or_null("DialoguePanel")
+	if dlg and dlg.has_method("open_tree"):
+		dlg.open_tree(tree_id)
+		return true
+	return false
 
 func _do_vos(_player: Node) -> void:
 	if EventBus:
@@ -445,9 +466,13 @@ func _do_smith(player: Node) -> void:
 	var cq := get_node_or_null("/root/CraftQueue")
 	if cq:
 		cq.bind_player(player)
-		var r: String = cq.try_start("smith_iron_blade", "smith")
+		# Prefer rare saber if mats available, else iron blade
+		var r: String = cq.try_start("smith_scar_saber", "smith")
+		if r == "ok":
+			return
+		r = cq.try_start("smith_iron_blade", "smith")
 		if r != "ok" and EventBus:
-			EventBus.hud_toast.emit("Brann: need 2 Wake Ore + 15g (%s)" % r)
+			EventBus.hud_toast.emit("Brann: Wake Ore+gold for blade; +shard for Rare Scar-Wake Saber (%s)" % r)
 	elif EventBus:
 		EventBus.hud_toast.emit("Brann: Forge closed (stub)")
 

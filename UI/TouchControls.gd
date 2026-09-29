@@ -46,6 +46,12 @@ var _stick_side: String = "left"    # left | right
 var _right_cluster: Control
 var _default_stick_offsets: Dictionary = {}
 var _default_cluster_offsets: Dictionary = {}
+var _inv_panel: Node = null
+var _char_panel: Node = null
+var _dlg_panel: Node = null
+var _inv_btn: Button
+var _char_btn: Button
+var _quest_lbl: Label
 
 func _ready() -> void:
 	if player_path:
@@ -93,7 +99,7 @@ func _ready() -> void:
 		blk.button_up.connect(func():
 			if _player and _player.has_method("set_blocking"):
 				_player.set_blocking(false)
-	)
+		)
 	_afk_btn.toggled.connect(_on_afk_toggled)
 	_afk_btn.text = "Agent"
 	$Root/ReturnReport/VBox/Close.pressed.connect(func():
@@ -191,9 +197,49 @@ func _ensure_extra_buttons() -> void:
 	_stats_lbl = Label.new()
 	_stats_lbl.name = "StatsLbl"
 	_stats_lbl.position = Vector2(12, 150)
-	_stats_lbl.size = Vector2(320, 60)
+	_stats_lbl.size = Vector2(360, 80)
 	_stats_lbl.add_theme_font_size_override("font_size", 13)
 	_root.add_child(_stats_lbl)
+
+	_inv_btn = Button.new()
+	_inv_btn.name = "InvBtn"
+	_inv_btn.text = "INV"
+	_inv_btn.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	_inv_btn.offset_left = 12
+	_inv_btn.offset_top = 230
+	_inv_btn.offset_right = 90
+	_inv_btn.offset_bottom = 266
+	_root.add_child(_inv_btn)
+	_inv_btn.pressed.connect(func():
+		if _inv_panel and _inv_panel.has_method("toggle"):
+			if _char_panel and _char_panel.has_method("close_panel"):
+				_char_panel.close_panel()
+			_inv_panel.toggle()
+	)
+
+	_char_btn = Button.new()
+	_char_btn.name = "CharBtn"
+	_char_btn.text = "CHAR"
+	_char_btn.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	_char_btn.offset_left = 96
+	_char_btn.offset_top = 230
+	_char_btn.offset_right = 174
+	_char_btn.offset_bottom = 266
+	_root.add_child(_char_btn)
+	_char_btn.pressed.connect(func():
+		if _char_panel and _char_panel.has_method("toggle"):
+			if _inv_panel and _inv_panel.has_method("close_panel"):
+				_inv_panel.close_panel()
+			_char_panel.toggle()
+	)
+
+	_quest_lbl = Label.new()
+	_quest_lbl.name = "QuestLbl"
+	_quest_lbl.position = Vector2(12, 270)
+	_quest_lbl.size = Vector2(400, 40)
+	_quest_lbl.add_theme_font_size_override("font_size", 12)
+	_quest_lbl.add_theme_color_override("font_color", Color(0.85, 0.8, 0.55))
+	_root.add_child(_quest_lbl)
 
 func bind_player(p: Node) -> void:
 	_player = p
@@ -203,12 +249,19 @@ func bind_player(p: Node) -> void:
 			c.resources_changed.connect(_refresh_bars)
 	_refresh_bars()
 
+func bind_rpg_panels(inv: Node, charp: Node, dlg: Node) -> void:
+	_inv_panel = inv
+	_char_panel = charp
+	_dlg_panel = dlg
+	if dlg:
+		dlg.add_to_group("dialogue_panel")
+
 func _apply_phone_scale() -> void:
 	var sz := get_viewport().get_visible_rect().size
 	var shortest := minf(sz.x, sz.y)
 	_ui_scale = clampf(shortest / 720.0, 0.85, 1.35)
 	if _hint:
-		_hint.text = "Ashcrown · stick · hold ATK=heavy · DODGE · BLOCK · USE · Agent AFK"
+		_hint.text = "Ashcrown 0.4.0 · AFK agent · INV/CHAR · hold ATK · Agent watch"
 
 func _process(_delta: float) -> void:
 	_refresh_bars()
@@ -234,11 +287,21 @@ func _refresh_bars() -> void:
 			var b: Dictionary = _player.get_equip_bonus()
 			atk_bonus = int(b.get("atk", 0))
 			def_bonus = int(b.get("def", 0))
-		_stats_lbl.text = "XP %s · Gold %s · ATK+%s DEF+%s\nHeat gates skills when overheated" % [
+		var lvl := 1
+		if _player.has_method("get_level"):
+			lvl = int(_player.get_level())
+		elif _player.get("attr_sheet") != null:
+			lvl = int(_player.attr_sheet.get("level", 1))
+		_stats_lbl.text = "Lv%s · XP %s · Gold %s · ATK+%s DEF+%s\nHeat gates skills when overheated" % [
+			lvl,
 			_player.get("xp") if _player.get("xp") != null else 0,
 			_player.get("gold") if _player.get("gold") != null else 0,
 			atk_bonus, def_bonus
 		]
+	if _quest_lbl:
+		var qm := get_node_or_null("/root/QuestManager")
+		if qm and qm.has_method("status_text"):
+			_quest_lbl.text = qm.status_text()
 
 func _on_afk_toggled(on: bool) -> void:
 	var afk := get_node_or_null("/root/AfkManager")

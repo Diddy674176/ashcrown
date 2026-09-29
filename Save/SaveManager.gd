@@ -1,7 +1,9 @@
 extends Node
+const _Attributes = preload("res://Character/Attributes.gd")
+const _SkillNodes = preload("res://Character/SkillNodes.gd")
 ## Corruption-safe autosave — position, combat, kit, quest, equip, companion, AFK.
 
-const SAVE_VERSION := 4
+const SAVE_VERSION := 5
 const SAVE_DIR := "user://saves"
 const SAVE_NAME := "autosave.json"
 const TEMP_NAME := "autosave.json.tmp"
@@ -30,6 +32,9 @@ var data: Dictionary = {
 	"last_afk_report": {},
 	"control_layout": "default",
 	"control_stick_side": "left",
+	"level": 1,
+	"attr_sheet": {},
+	"skill_state": {},
 }
 var _player: Node3D
 var _timer: Timer
@@ -84,6 +89,11 @@ func capture_from_player(player: Node3D) -> void:
 		data["companion_id"] = player.companion_id
 	if "potions" in player:
 		data["potions"] = player.potions
+	if "attr_sheet" in player:
+		data["attr_sheet"] = player.attr_sheet.duplicate(true)
+		data["level"] = int(player.attr_sheet.get("level", 1))
+	if "skill_state" in player:
+		data["skill_state"] = player.skill_state.duplicate(true)
 	var c = player.get("combat")
 	if c:
 		data["hp"] = c.hp
@@ -123,6 +133,21 @@ func apply_to_player(player: Node3D) -> void:
 			player.call_deferred("recruit_companion", player.companion_id)
 	if "potions" in player:
 		player.potions = int(data.get("potions", 3))
+	if "attr_sheet" in player:
+		var sheet = data.get("attr_sheet", {})
+		if typeof(sheet) == TYPE_DICTIONARY and not sheet.is_empty():
+			player.attr_sheet = sheet.duplicate(true)
+		elif player.attr_sheet.is_empty():
+			player.attr_sheet = _Attributes.make_sheet()
+		# Sync xp field
+		if "xp" in player:
+			player.attr_sheet["xp"] = int(player.attr_sheet.get("xp", player.xp))
+	if "skill_state" in player:
+		var sk = data.get("skill_state", {})
+		if typeof(sk) == TYPE_DICTIONARY and not sk.is_empty():
+			player.skill_state = sk.duplicate(true)
+		elif player.skill_state.is_empty():
+			player.skill_state = _SkillNodes.make_state(str(data.get("kit_id", "Ashblade")))
 	var c = player.get("combat")
 	if c and c.has_method("apply_snapshot"):
 		c.apply_snapshot({
@@ -194,6 +219,12 @@ func load_save() -> bool:
 		loaded["control_layout"] = "default"
 	if not loaded.has("control_stick_side"):
 		loaded["control_stick_side"] = "left"
+	if not loaded.has("attr_sheet"):
+		loaded["attr_sheet"] = {}
+	if not loaded.has("skill_state"):
+		loaded["skill_state"] = {}
+	if not loaded.has("level"):
+		loaded["level"] = 1
 	loaded["version"] = SAVE_VERSION
 	data = loaded
 	return true

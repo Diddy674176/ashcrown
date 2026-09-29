@@ -98,6 +98,7 @@ func _on_option(next_id: String, effect: String) -> void:
 		"accept_quest", "consequence_helped", "consequence_ignored",
 		"end", "flag_cald_hint", "flag_sera_afk", "flag_met_cald", "give_root_charm",
 	]:
+		# Terminal-ish: if next empty, close after effect
 		if next_id == "":
 			close_dialogue()
 			return

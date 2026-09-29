@@ -26,3 +26,16 @@ ios/build/
 *.pck
 *.zip
 mono_crash.*
+
+# Local Android signing (never commit)
+android-keys/
+*.keystore
+*.jks
+build/
+export/*.apk
+
+
+_push/
+build/*.apk
+export/*.apk
+android-keys/

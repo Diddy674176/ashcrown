@@ -1,5 +1,6 @@
 extends CharacterBody3D
 class_name EnemyBase
+const _ItemDB = preload("res://Inventory/ItemDB.gd")
 ## Distinct Emberveil roles — COMBAT.md §6 / BOSS_COIL_WARDEN.md ladder.
 ## Vein-mite (skirmisher) · Wake-warped stag (bruiser) · Conduit wisp (caster)
 
@@ -21,6 +22,7 @@ signal looted(drops: Dictionary)
 @export var xp_reward: int = 12
 @export var gold_reward: int = 5
 @export var loot_id: String = "vein_mite_carapace"
+@export var enemy_level: int = 1
 @export var poise_max: float = 30.0
 
 var combat
@@ -65,7 +67,8 @@ func _apply_role_defaults() -> void:
 			attack_cooldown = 1.15
 			poise_max = 18.0
 			loot_id = "vein_mite_carapace"
-			xp_reward = 15
+			enemy_level = 1
+			xp_reward = 25
 			gold_reward = 6
 		Role.BRUISER:
 			if display_name == "Enemy":
@@ -79,7 +82,8 @@ func _apply_role_defaults() -> void:
 			aggro_range = 14.0
 			poise_max = 70.0
 			loot_id = "brutefang_plate"
-			xp_reward = 35
+			enemy_level = 3
+			xp_reward = 55
 			gold_reward = 14
 		Role.CASTER:
 			if display_name == "Enemy":
@@ -93,7 +97,8 @@ func _apply_role_defaults() -> void:
 			aggro_range = 16.0
 			poise_max = 22.0
 			loot_id = "spitter_bowstring"
-			xp_reward = 22
+			enemy_level = 2
+			xp_reward = 40
 			gold_reward = 9
 
 static func make_skirmisher(pos: Vector3) -> EnemyBase:
@@ -377,10 +382,16 @@ func receive_hit(amount: float, source: Node = null) -> void:
 func _on_died() -> void:
 	_dead = true
 	velocity = Vector3.ZERO
+	var drop_item := loot_id
+	if role == Role.BRUISER and randf() < 0.28:
+		drop_item = "scar_wake_saber"
+	elif role == Role.CASTER and randf() < 0.22:
+		drop_item = "ember_charm"
 	var drops := {
 		"xp": xp_reward,
 		"gold": gold_reward,
-		"item": loot_id,
+		"item": drop_item,
+		"item_name": _ItemDB.display_name(drop_item),
 		"name": display_name,
 		"role": role,
 	}

@@ -1,4 +1,5 @@
 extends Node
+const _ItemDB = preload("res://Inventory/ItemDB.gd")
 ## Smith + alchemy craft queue with tick stub (usable from town).
 
 signal craft_completed(recipe_id: String, item_id: String)
@@ -18,6 +19,13 @@ const RECIPES := {
 		"inputs": {"ember_fiber": 1, "gold": 5},
 		"output": "health_draught",
 		"seconds": 6.0,
+	},
+	"smith_scar_saber": {
+		"name": "Forge Scar-Wake Saber",
+		"station": "smith",
+		"inputs": {"wake_ore": 3, "ashblade_shard": 1, "gold": 40},
+		"output": "scar_wake_saber",
+		"seconds": 12.0,
 	},
 }
 
@@ -44,7 +52,7 @@ func _finish_job(job: Dictionary) -> void:
 		_player.add_item(out_id)
 	craft_completed.emit(str(job.get("recipe_id", "")), out_id)
 	if EventBus:
-		EventBus.hud_toast.emit("Craft ready: %s" % ItemDB.display_name(out_id))
+		EventBus.hud_toast.emit("Craft ready: %s" % _ItemDB.display_name(out_id))
 
 func try_start(recipe_id: String, station: String) -> String:
 	if not RECIPES.has(recipe_id):

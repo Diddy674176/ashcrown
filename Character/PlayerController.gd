@@ -3,6 +3,9 @@ extends CharacterBody3D
 
 const _CombatActor = preload("res://Combat/CombatActor.gd")
 const _CombatBrain = preload("res://Combat/CombatBrain.gd")
+const _Attributes = preload("res://Character/Attributes.gd")
+const _SkillNodes = preload("res://Character/SkillNodes.gd")
+const _ItemDB = preload("res://Inventory/ItemDB.gd")
 
 const WALK_SPEED := 4.5
 const SPRINT_SPEED := 7.0
@@ -26,6 +29,7 @@ const SKILL_FOCUS := 20.0
 const HEAVY_HOLD_SEC := 0.35
 const CHARGED_HOLD_SEC := 0.85
 const SOFT_LOCK_TURN := 6.0
+const INVENTORY_CAP := 40
 
 @export var mouse_sensitivity := 0.003
 @export var touch_look_sensitivity := 0.0045
@@ -45,6 +49,10 @@ var xp: int = 0
 var gold: int = 0
 var inventory: Array = []
 var potions: int = 3
+var attr_sheet: Dictionary = {}
+var skill_state: Dictionary = {}
+var _skill_cds: Dictionary = {}  # node_id -> remaining cd
+var _ult_cd: float = 0.0
 
 var combat
 var combat_mode: int = _CombatBrain.Mode.MANUAL
@@ -72,10 +80,16 @@ func _ready() -> void:
 	add_child(combat)
 	combat.died.connect(_on_player_died)
 	_tint_player()
+	if attr_sheet.is_empty():
+		attr_sheet = _Attributes.make_sheet()
+	if skill_state.is_empty():
+		skill_state = _SkillNodes.make_state(_kit_id)
 	if SaveManager:
 		SaveManager.register_player(self)
 		SaveManager.load_save()
 		SaveManager.apply_to_player(self)
+	_ensure_starter_gear()
+	_recalc_equip()
 	_apply_cam_distance()
 	if EventBus:
 		EventBus.action_attack.connect(_on_attack_tap)
@@ -177,7 +191,10 @@ func _physics_process(delta: float) -> void:
 	_dodge_timer = maxf(_dodge_timer - delta, 0.0)
 	_skill1_cd = maxf(_skill1_cd - delta, 0.0)
 	_skill2_cd = maxf(_skill2_cd - delta, 0.0)
+	_ult_cd = maxf(_ult_cd - delta, 0.0)
 	_auto_attack_cd = maxf(_auto_attack_cd - delta, 0.0)
+	for k in _skill_cds.keys():
+		_skill_cds[k] = maxf(float(_skill_cds[k]) - delta, 0.0)
 
 	if soft_lock_on:
 		soft_lock_target = _CombatBrain.pick_target(global_position, get_tree(), soft_lock_target)
@@ -291,10 +308,6 @@ func _on_attack_tap() -> void:
 func _on_skill(slot: int) -> void:
 	if _attack_lock > 0.0 or not combat.alive:
 		return
-	if slot == 1 and _skill1_cd > 0.0:
-		return
-	if slot == 2 and _skill2_cd > 0.0:
-		return
 	if combat.is_overheated():
 		if EventBus:
 			EventBus.hud_toast.emit("Overheated — skills sealed")
@@ -303,16 +316,53 @@ func _on_skill(slot: int) -> void:
 		if EventBus:
 			EventBus.hud_toast.emit("Heat high — skill blocked")
 		return
-	if not combat.try_spend_focus(SKILL_FOCUS):
+	var node_id: String = _SkillNodes.skill_at_slot(skill_state, slot)
+	# Fallback to legacy slot cds if no node equipped
+	if node_id == "":
+		if slot == 1 and _skill1_cd > 0.0:
+			return
+		if slot == 2 and _skill2_cd > 0.0:
+			return
+		if not combat.try_spend_focus(SKILL_FOCUS):
+			return
+		combat.add_heat(18.0 if slot == 1 else 14.0)
+		_attack_lock = 0.35
+		if slot == 1:
+			_skill1_cd = 2.2
+		else:
+			_skill2_cd = 1.8
+		var dmg: float = (SKILL1_DMG if slot == 1 else SKILL2_DMG) + _Attributes.skill_power_from_attrs(attr_sheet)
+		_strike_locked(dmg)
 		return
-	combat.add_heat(18.0 if slot == 1 else 14.0)
+	var cd_left := float(_skill_cds.get(node_id, 0.0))
+	if slot == 4:
+		cd_left = _ult_cd
+	if cd_left > 0.0:
+		return
+	var defn: Dictionary = _SkillNodes.get_node(node_id)
+	var focus_cost := float(defn.get("focus", SKILL_FOCUS))
+	if not combat.try_spend_focus(focus_cost):
+		return
+	var heat_amt := float(defn.get("heat", 14.0))
+	combat.add_heat(heat_amt)
 	_attack_lock = 0.35
-	if slot == 1:
-		_skill1_cd = 2.2
+	var cd := float(defn.get("cd", 2.0))
+	if slot == 4:
+		_ult_cd = cd
 	else:
-		_skill2_cd = 1.8
-	var dmg := SKILL1_DMG if slot == 1 else SKILL2_DMG
-	_strike_locked(dmg)
+		_skill_cds[node_id] = cd
+		if slot == 1:
+			_skill1_cd = cd
+		elif slot == 2:
+			_skill2_cd = cd
+	var heal_amt: float = float(defn.get("heal", 0.0))
+	if heal_amt > 0.0:
+		combat.heal(heal_amt + _Attributes.skill_power_from_attrs(attr_sheet) * 0.5)
+		if EventBus:
+			EventBus.hud_toast.emit("%s — ward" % defn.get("name", node_id))
+	var dmg: float = float(defn.get("dmg", 0.0)) + _Attributes.skill_power_from_attrs(attr_sheet)
+	if dmg > 0.0:
+		_strike_locked(dmg)
 
 func _do_attack(kind: String) -> void:
 	if _attack_lock > 0.0 or not combat.alive:
@@ -341,7 +391,7 @@ func _strike_locked(damage: float) -> void:
 		best = null
 		var best_d := ATTACK_RANGE
 		for n in get_tree().get_nodes_in_group("enemy"):
-				if n == null or not is_instance_valid(n):
+			if n == null or not is_instance_valid(n):
 				continue
 			var d: float = global_position.distance_to((n as Node3D).global_position)
 			if d <= best_d:
@@ -364,7 +414,7 @@ func _on_interact() -> void:
 		EventBus.player_interact.emit(self)
 
 func _on_enemy_killed(_enemy: Node, drops: Dictionary) -> void:
-	xp += int(drops.get("xp", 0))
+	add_xp(int(drops.get("xp", 0)))
 	gold += int(drops.get("gold", 0))
 	var item: String = str(drops.get("item", ""))
 	if item != "":
@@ -395,53 +445,108 @@ var _equip_hp_bonus: float = 0.0
 func add_item(item_id: String) -> void:
 	if item_id == "":
 		return
+	if inventory.size() >= INVENTORY_CAP:
+		if EventBus:
+			EventBus.hud_toast.emit("Pack full")
+		return
 	inventory.append(item_id)
-	var ItemDBScript = load("res://Inventory/ItemDB.gd")
-	var defn: Dictionary = {}
-	if ItemDBScript:
-		defn = ItemDBScript.get_item(item_id)
+	var defn: Dictionary = _ItemDB.get_item(item_id)
 	var slot := str(defn.get("slot", ""))
 	if slot in ["weapon", "armor", "charm"]:
 		_try_auto_equip(item_id, slot, defn)
 	if item_id == "health_draught":
 		potions += 1
+	if EventBus:
+		EventBus.inventory_changed.emit()
+
+func _ensure_starter_gear() -> void:
+	if inventory.is_empty():
+		inventory.append("starter_blade")
+		inventory.append("starter_vest")
+		inventory.append("health_draught")
+		inventory.append("health_draught")
+		equipment["weapon"] = "starter_blade"
+		equipment["armor"] = "starter_vest"
+		potions = maxi(potions, 2)
 
 func _try_auto_equip(item_id: String, slot: String, defn: Dictionary) -> void:
 	var cur := str(equipment.get(slot, ""))
-	var new_atk := int(defn.get("stats", {}).get("atk", 0)) + int(defn.get("stats", {}).get("def", 0))
-	var cur_score := 0
-	if cur != "":
-		var ItemDBScript = load("res://Inventory/ItemDB.gd")
-		var cold = ItemDBScript.get_item(cur)
-		cur_score = int(cold.get("stats", {}).get("atk", 0)) + int(cold.get("stats", {}).get("def", 0))
-	if new_atk >= cur_score or cur == "":
+	var new_score: int = _ItemDB.power_score(item_id)
+	var cur_score: int = 0 if cur == "" else _ItemDB.power_score(cur)
+	if new_score >= cur_score or cur == "":
 		equipment[slot] = item_id
 		_recalc_equip()
 		if EventBus:
-			EventBus.hud_toast.emit("Equipped %s" % str(defn.get("name", item_id)))
+			EventBus.hud_toast.emit("Equipped %s [%s]" % [str(defn.get("name", item_id)), str(defn.get("tier", "common"))])
+
+func equip_item(item_id: String) -> bool:
+	if item_id not in inventory and count_item(item_id) <= 0:
+		# still allow if somehow equipped-only
+		pass
+	var defn: Dictionary = _ItemDB.get_item(item_id)
+	var slot := str(defn.get("slot", ""))
+	if slot not in ["weapon", "armor", "charm"]:
+		return false
+	if count_item(item_id) <= 0 and str(equipment.get(slot, "")) != item_id:
+		inventory.append(item_id)
+	equipment[slot] = item_id
+	_recalc_equip()
+	if EventBus:
+		EventBus.hud_toast.emit("Equipped %s" % defn.get("name", item_id))
+		EventBus.inventory_changed.emit()
+	return true
+
+func unequip_slot(slot: String) -> bool:
+	if slot not in equipment:
+		return false
+	var cur := str(equipment.get(slot, ""))
+	if cur == "":
+		return false
+	equipment[slot] = ""
+	_recalc_equip()
+	if EventBus:
+		EventBus.hud_toast.emit("Unequipped %s" % _ItemDB.display_name(cur))
+		EventBus.inventory_changed.emit()
+	return true
 
 func _recalc_equip() -> void:
 	_atk_bonus = 0.0
 	_def_bonus = 0.0
 	var hp_add := 0.0
-	var ItemDBScript = load("res://Inventory/ItemDB.gd")
+	var foc_add := 0.0
 	for slot in equipment.keys():
 		var id := str(equipment[slot])
-		if id == "" or ItemDBScript == null:
+		if id == "":
 			continue
-		var d = ItemDBScript.get_item(id)
+		var d: Dictionary = _ItemDB.get_item(id)
 		var st: Dictionary = d.get("stats", {})
 		_atk_bonus += float(st.get("atk", 0))
 		_def_bonus += float(st.get("def", 0))
 		hp_add += float(st.get("max_hp", 0))
+		foc_add += float(st.get("foc", 0)) * 2.0
+	# Attribute contributions
+	_atk_bonus += _Attributes.atk_from_attrs(attr_sheet)
+	hp_add += _Attributes.hp_from_attrs(attr_sheet)
+	foc_add += _Attributes.focus_from_attrs(attr_sheet)
 	if combat:
 		var base_hp := 120.0
+		var prev_max: float = combat.max_hp
 		combat.max_hp = base_hp + hp_add
+		if combat.max_hp > prev_max:
+			combat.hp += combat.max_hp - prev_max
 		combat.hp = minf(combat.hp, combat.max_hp)
+		combat.max_focus = 100.0 + foc_add
+		combat.focus = minf(combat.focus, combat.max_focus)
 		combat.resources_changed.emit()
 
 func get_equip_bonus() -> Dictionary:
 	return {"atk": int(_atk_bonus), "def": int(_def_bonus)}
+
+func compare_equip(item_id: String) -> Dictionary:
+	var defn: Dictionary = _ItemDB.get_item(item_id)
+	var slot := str(defn.get("slot", ""))
+	var cur := str(equipment.get(slot, "")) if slot in equipment else ""
+	return _ItemDB.compare(item_id, cur)
 
 func count_item(item_id: String) -> int:
 	var n := 0
@@ -461,9 +566,69 @@ func consume_item(item_id: String, qty: int = 1) -> bool:
 	inventory = keep
 	return left == 0
 
+func add_xp(amount: int) -> void:
+	if amount <= 0:
+		return
+	xp += amount
+	attr_sheet["xp"] = int(attr_sheet.get("xp", 0)) + amount
+	var before := int(attr_sheet.get("level", 1))
+	if _Attributes.try_level_up(attr_sheet):
+		var after := int(attr_sheet.get("level", 1))
+		_SkillNodes.sync_unlocks(skill_state, after)
+		_recalc_equip()
+		if EventBus:
+			EventBus.player_leveled.emit(after)
+			EventBus.hud_toast.emit("Level %d! +%d attribute points" % [
+				after, _Attributes.POINTS_PER_LEVEL * (after - before)
+			])
+			EventBus.attributes_changed.emit()
+			EventBus.skills_changed.emit()
+
+func spend_attribute(key: String) -> bool:
+	if not _Attributes.spend(attr_sheet, key):
+		return false
+	_recalc_equip()
+	if EventBus:
+		EventBus.attributes_changed.emit()
+		EventBus.hud_toast.emit("+1 %s" % _Attributes.DISPLAY.get(key, key))
+	return true
+
+func respec_attributes() -> bool:
+	if not _Attributes.respec(attr_sheet):
+		if EventBus:
+			EventBus.hud_toast.emit("Free respec already used")
+		return false
+	_recalc_equip()
+	if EventBus:
+		EventBus.attributes_changed.emit()
+		EventBus.hud_toast.emit("Attributes reset (free town respec spent)")
+	return true
+
+func choose_skill_node(node_id: String) -> bool:
+	if not _SkillNodes.choose_node(skill_state, node_id):
+		return false
+	if EventBus:
+		EventBus.skills_changed.emit()
+		EventBus.hud_toast.emit("Unlocked %s" % _SkillNodes.get_node(node_id).get("name", node_id))
+	return true
+
+func equip_skill(node_id: String) -> bool:
+	if not _SkillNodes.equip(skill_state, node_id):
+		if EventBus:
+			EventBus.hud_toast.emit("Skill bar full (max 3) or locked")
+		return false
+	if EventBus:
+		EventBus.skills_changed.emit()
+	return true
+
+func unequip_skill(node_id: String) -> bool:
+	_SkillNodes.unequip(skill_state, node_id)
+	if EventBus:
+		EventBus.skills_changed.emit()
+	return true
+
 func recruit_companion(id: String = "Rook") -> void:
 	companion_id = id
-	# Spawn follower if not present
 	if get_tree().get_nodes_in_group("companion").is_empty():
 		var Comp = load("res://Companions/CompanionRook.gd")
 		if Comp:
@@ -475,7 +640,6 @@ func recruit_companion(id: String = "Rook") -> void:
 		EventBus.hud_toast.emit("%s joins your watch." % id)
 		EventBus.quest_flag_set.emit(&"rook_recruited", true)
 
-
 func capture_to_save() -> void:
 	if SaveManager:
 		SaveManager.capture_from_player(self)
@@ -486,3 +650,11 @@ func get_kit_id() -> String:
 
 func set_kit_id(id: String) -> void:
 	_kit_id = id
+	if skill_state.is_empty() or skill_state.get("unlocked", []).is_empty():
+		skill_state = _SkillNodes.make_state(_kit_id)
+
+func get_level() -> int:
+	return int(attr_sheet.get("level", 1))
+
+func get_attr_summary() -> String:
+	return _Attributes.summary_line(attr_sheet)
