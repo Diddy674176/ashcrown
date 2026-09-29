@@ -1,6 +1,10 @@
 extends Node3D
 ## Bootstrap - Emberveil Reach playable slice + Coilcrypt load.
 
+const _InventoryPanel = preload("res://UI/InventoryPanel.gd")
+const _CharacterPanel = preload("res://UI/CharacterPanel.gd")
+const _DialoguePanel = preload("res://UI/DialoguePanel.gd")
+
 @onready var player: CharacterBody3D = $Player
 @onready var touch: CanvasLayer = $TouchControls
 @onready var streamer: Node3D = $ChunkStreamer
@@ -14,14 +18,35 @@ func _ready() -> void:
 		touch.bind_player(player)
 	if streamer and streamer.has_method("bind_player"):
 		streamer.bind_player(player)
+	_mount_rpg_ui()
 	EventBus.player_spawned.emit(player)
 	EventBus.player_interact.connect(_on_player_interact)
 	EventBus.enter_dungeon_requested.connect(_on_enter_dungeon)
 	EventBus.exit_dungeon_requested.connect(_exit_coilcrypt)
 	if SaveManager and not SaveManager.has_save():
 		player.global_position = Vector3(0, 1.2, 36)
-	# Kit default Ashblade already on player; toast intro
-	EventBus.hud_toast.emit("0.2.1 — Wake-Pit teaches dodge/block/red · Controls remaps · day/night NPCs")
+	EventBus.hud_toast.emit("0.3.0 — Inventory/Attrs/Skills · Len choice · equip power")
+
+func _mount_rpg_ui() -> void:
+	var inv = _InventoryPanel.new()
+	inv.name = "InventoryPanel"
+	add_child(inv)
+	inv.bind_player(player)
+	var charp = _CharacterPanel.new()
+	charp.name = "CharacterPanel"
+	add_child(charp)
+	charp.bind_player(player)
+	var dlg = _DialoguePanel.new()
+	dlg.name = "DialoguePanel"
+	add_child(dlg)
+	dlg.effect_requested.connect(_on_dialogue_effect)
+	if touch and touch.has_method("bind_rpg_panels"):
+		touch.bind_rpg_panels(inv, charp, dlg)
+
+func _on_dialogue_effect(effect: String) -> void:
+	var qm := get_node_or_null("/root/QuestManager")
+	if qm and qm.has_method("handle_dialogue_effect"):
+		qm.handle_dialogue_effect(effect)
 
 func _on_player_interact(p: Node) -> void:
 	if _in_dungeon:
@@ -44,7 +69,6 @@ func _enter_coilcrypt() -> void:
 	_in_dungeon = true
 	if region:
 		region.visible = false
-		# Disable region physics processing lightly
 		region.process_mode = Node.PROCESS_MODE_DISABLED
 	var ctrl_script: GDScript = load("res://Dungeons/Coilcrypt/CoilcryptController.gd") as GDScript
 	_dungeon = ctrl_script.new()
@@ -65,7 +89,7 @@ func _exit_coilcrypt() -> void:
 	if region:
 		region.visible = true
 		region.process_mode = Node.PROCESS_MODE_INHERIT
-	player.global_position = Vector3(0, 1.2, -20)  # just outside mouth
+	player.global_position = Vector3(0, 1.2, -20)
 	if SaveManager:
 		SaveManager.set_scene_id("emberveil")
 		player.capture_to_save()
