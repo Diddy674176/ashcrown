@@ -2,7 +2,7 @@
 
 **Owner:** Creative Director  
 **Status:** LOCKED — grind targets for studio  
-**Scope:** §2 vertical slice only (one region)  
+**Scope:** §82 vertical slice only (one region)  
 **Canonical docs:** `/workspace/ashcrown-docs/` · repo https://github.com/Diddy674176/ashcrown
 
 ---
@@ -104,10 +104,11 @@ Other regions, floating isles as playable, Corehold politics deep dive, sailing,
 
 ## 8. NEXT
 
-1. World Builder: `WORLD_POI_BRIEF.md` from this lock.  
-2. Combat Designer: Coil Warden phase sheet aligned to this fantasy.  
-3. CD: review first art/UI passes against `TONE.md` feeling test.  
-4. Godot Engineer: scaffold empty scenes using naming sheet.
+1. ~~World Builder: `WORLD_POI_BRIEF.md`~~ DONE (`WORLD_POI_BRIEF.md`).  
+2. ~~Combat / CD Coil Warden lock~~ DONE (`BOSS_COIL_WARDEN.md`).  
+3. AFK report voice DONE (`AFK_REPORT_VOICE.md`).  
+4. **Godot Engineer:** implement P0 in `FP_CREATIVE_UNBLOCKS.md` (combat + Warden + AFK report on device) — then studio pings Bob.  
+5. CD: review device builds against `TONE.md` feeling test before Bob ping.
 
 ---
 
