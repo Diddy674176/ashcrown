@@ -146,6 +146,9 @@ func set_blocking(v: bool) -> void:
 func is_blocking() -> bool:
 	return _blocking or Time.get_ticks_msec() * 0.001 < _auto_block_until
 
+func is_dodging() -> bool:
+	return _dodge_timer > 0.0 or (combat != null and combat.is_invincible())
+
 func _apply_cam_distance() -> void:
 	if _camera:
 		_camera.position = Vector3(0, 0.4, _cam_distance)
@@ -338,7 +341,7 @@ func _strike_locked(damage: float) -> void:
 		best = null
 		var best_d := ATTACK_RANGE
 		for n in get_tree().get_nodes_in_group("enemy"):
-			if n == null or not is_instance_valid(n):
+				if n == null or not is_instance_valid(n):
 				continue
 			var d: float = global_position.distance_to((n as Node3D).global_position)
 			if d <= best_d:
