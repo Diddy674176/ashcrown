@@ -8,7 +8,7 @@ config_version=5
 
 config/name="Ashcrown"
 config/description="Mobile AFK open-world action RPG"
-config/version="0.2.1"
+config/version="0.3.0"
 run/main_scene="res://Main/Main.tscn"
 config/features=PackedStringArray("4.3", "Forward Mobile")
 config/icon="res://icon.svg"
