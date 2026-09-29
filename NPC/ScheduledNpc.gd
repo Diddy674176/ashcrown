@@ -19,6 +19,7 @@ var _body: MeshInstance3D
 var _area: Area3D
 var _player_inside: bool = false
 var _cycle: Node = null
+var _sim_lod: int = 0  # 0 full, 1 simplified, 2 abstract (hidden mesh)
 
 func _ready() -> void:
 	add_to_group("scheduled_npc")
@@ -104,20 +105,51 @@ func _on_exit(b: Node) -> void:
 	if b.is_in_group("player"):
 		_player_inside = false
 
+
+func set_sim_lod(lod: int) -> void:
+	_sim_lod = lod
+	# L2 abstract: keep node for schedule state but hide body when far / elsewhere
+	if lod >= 2:
+		if _body:
+			_body.visible = false
+		if _label:
+			_label.modulate = Color(0.55, 0.55, 0.6, 0.55)
+			_label.text = "%s [L2]" % display_name
+	else:
+		if _body:
+			_body.visible = visible
+		if _label:
+			_label.modulate = Color(0.9, 0.85, 0.6)
+			_refresh_label(_cycle != null and _cycle.has_method("is_night") and bool(_cycle.is_night()))
+
 func bark_line() -> String:
 	var night := _cycle != null and _cycle.has_method("is_night") and bool(_cycle.is_night())
+	var base := ""
 	match kind:
 		"len":
-			return "Len (house, offline): Come back at dawn." if night else "Len: Scout the Wilds. Kill 3 hostiles."
+			base = "Len (house, offline): Come back at dawn." if night else "Len: Scout the Wilds. Kill 3 hostiles."
 		"sera":
-			return "Sera: Lamp-lit maps — AFK profiles live at Ember Camp." if night else "Sera: Archives open. Ask about Ember Camp AFK."
+			base = "Sera: Lamp-lit maps — AFK profiles live at Ember Camp." if night else "Sera: Archives open. Ask about Ember Camp AFK."
 		"smith":
-			return "Brann (tired): Forge stays lit… barely." if night else "Brann: Bring Wake Ore. I'll queue a blade."
+			base = "Brann (tired): Forge stays lit… barely." if night else "Brann: Bring Wake Ore. I'll queue a blade."
 		"cald":
-			return "Sister Cald: Vigil on the Singing Root path. The scar hums louder." if night else "Sister Cald: Choirbound shrine — leave the Core alone."
+			base = "Sister Cald: Vigil on the Singing Root path. The scar hums louder." if night else "Sister Cald: Choirbound shrine — leave the Core alone."
 		"inn":
-			return "Rook: Resting at the Inn. Ready when you are." if night else "Inn yard — Rook waits after Len's request."
+			base = "Rook: Resting at the Inn. Ready when you are." if night else "Inn yard — Rook waits after Len's request."
 		"vos":
-			return "Vos: Wall patrol — night bandits thick near the waystone." if night else "Vos: Gate Yard clear. Watch the scar road north."
+			base = "Vos: Wall patrol — night bandits thick near the waystone." if night else "Vos: Gate Yard clear. Watch the scar road north."
 		_:
-			return "%s greets you." % display_name
+			base = "%s greets you." % display_name
+	var ws := get_node_or_null("/root/WorldSim")
+	if ws:
+		var eb := ""
+		if ws.has_method("event_bark"):
+			eb = str(ws.event_bark(kind))
+		if eb != "":
+			return eb
+		var fb := ""
+		if ws.has_method("faction_bark"):
+			fb = str(ws.faction_bark(kind))
+		if fb != "":
+			return "%s — %s" % [base, fb]
+	return base
