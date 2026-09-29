@@ -8,7 +8,7 @@ config_version=5
 
 config/name="Ashcrown"
 config/description="Mobile AFK open-world action RPG"
-config/version="0.4.0"
+config/version="0.5.0"
 run/main_scene="res://Main/Main.tscn"
 config/features=PackedStringArray("4.3", "Forward Mobile")
 config/icon="res://icon.svg"
@@ -21,6 +21,7 @@ AfkManager="*res://AFK/AfkManager.gd"
 QuestManager="*res://Quests/QuestManager.gd"
 PerformanceSettings="*res://Core/PerformanceSettings.gd"
 CraftQueue="*res://Crafting/CraftQueue.gd"
+WorldSim="*res://World/WorldSim.gd"
 
 
 [display]
