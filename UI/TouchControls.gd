@@ -1,5 +1,5 @@
 extends CanvasLayer
-## Mobile touch HUD - stick (deadzone), look swipe, ATK hold=heavy/charged, combat bars, AFK report.
+## Mobile touch HUD — remappable stick/cluster, AFK report, profile/combat/gfx.
 
 signal attack_pressed
 signal dodge_pressed
@@ -35,6 +35,18 @@ var _ui_scale: float = 1.0
 @onready var _report_body: Label = $Root/ReturnReport/VBox/Body
 @onready var _hint: Label = $Root/Hint
 
+var _profile_btn: Button
+var _auto_btn: Button
+var _gfx_btn: Button
+var _stats_lbl: Label
+var _controls_btn: Button
+var _layout_panel: PanelContainer
+var _layout_id: String = "default"  # default | left_hand
+var _stick_side: String = "left"    # left | right
+var _right_cluster: Control
+var _default_stick_offsets: Dictionary = {}
+var _default_cluster_offsets: Dictionary = {}
+
 func _ready() -> void:
 	if player_path:
 		_player = get_node_or_null(player_path)
@@ -43,7 +55,9 @@ func _ready() -> void:
 	_stick_base.gui_input.connect(_on_stick_gui)
 	_look_zone.gui_input.connect(_on_look_gui)
 	var atk: BaseButton = $Root/RightCluster/Attack
-	atk.button_down.connect(func(): EventBus.attack_hold_started.emit())
+	atk.button_down.connect(func():
+		EventBus.attack_hold_started.emit()
+	)
 	atk.button_up.connect(func():
 		EventBus.attack_hold_ended.emit()
 		attack_pressed.emit()
@@ -79,17 +93,107 @@ func _ready() -> void:
 		blk.button_up.connect(func():
 			if _player and _player.has_method("set_blocking"):
 				_player.set_blocking(false)
-		)
+	)
 	_afk_btn.toggled.connect(_on_afk_toggled)
-	$Root/ReturnReport/VBox/Close.pressed.connect(func(): _report.visible = false)
+	_afk_btn.text = "Agent"
+	$Root/ReturnReport/VBox/Close.pressed.connect(func():
+		_report.visible = false
+	)
+	_ensure_extra_buttons()
+	_right_cluster = $Root/RightCluster
+	_cache_default_layout()
+	_load_layout_from_save()
+	_ensure_controls_panel()
 	if EventBus:
 		EventBus.hud_toast.connect(_show_toast)
 		EventBus.afk_stopped.connect(_show_afk_report)
 		EventBus.loot_gained.connect(func(d):
-			_show_toast("+%s XP · %sg · %s" % [d.get("xp", 0), d.get("gold", 0), d.get("item", "")])
+			var iname := str(d.get("item_name", d.get("item", "")))
+			_show_toast("+%s XP · %sg · %s" % [d.get("xp", 0), d.get("gold", 0), iname])
 		)
-		EventBus.boss_phase_changed.connect(func(_id, banner): _show_toast(str(banner)))
+		EventBus.boss_phase_changed.connect(func(_id, banner):
+			_show_toast(str(banner))
+		)
 	_report.visible = false
+	_report_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+
+func _ensure_extra_buttons() -> void:
+	# Profile cycle — "Watch profile"
+	_profile_btn = Button.new()
+	_profile_btn.name = "ProfileBtn"
+	_profile_btn.text = "Balanced"
+	_profile_btn.position = Vector2(0, 0)
+	_profile_btn.size = Vector2(120, 36)
+	_root.add_child(_profile_btn)
+	_profile_btn.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	_profile_btn.offset_left = -270
+	_profile_btn.offset_top = 36
+	_profile_btn.offset_right = -148
+	_profile_btn.offset_bottom = 72
+	_profile_btn.pressed.connect(func():
+		var afk := get_node_or_null("/root/AfkManager")
+		if afk and afk.has_method("cycle_profile"):
+			_profile_btn.text = afk.cycle_profile()
+		_show_toast("Watch profile: %s" % _profile_btn.text)
+	)
+	var afk0 := get_node_or_null("/root/AfkManager")
+	if afk0:
+		_profile_btn.text = str(afk0.active_profile)
+
+	# Combat mode AUTO
+	_auto_btn = Button.new()
+	_auto_btn.name = "AutoBtn"
+	_auto_btn.text = "Manual"
+	_auto_btn.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	_auto_btn.offset_left = -270
+	_auto_btn.offset_top = 78
+	_auto_btn.offset_right = -148
+	_auto_btn.offset_bottom = 114
+	_root.add_child(_auto_btn)
+	_auto_btn.pressed.connect(func():
+		if _player and _player.has_method("cycle_combat_mode"):
+			_player.cycle_combat_mode()
+			_auto_btn.text = _player.get_combat_mode_name()
+	)
+
+	# Graphics preset
+	_gfx_btn = Button.new()
+	_gfx_btn.name = "GfxBtn"
+	_gfx_btn.text = "Mid"
+	_gfx_btn.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	_gfx_btn.offset_left = -270
+	_gfx_btn.offset_top = 120
+	_gfx_btn.offset_right = -148
+	_gfx_btn.offset_bottom = 156
+	_root.add_child(_gfx_btn)
+	_gfx_btn.pressed.connect(func():
+		var perf := get_node_or_null("/root/PerformanceSettings")
+		if perf and perf.has_method("cycle"):
+			_gfx_btn.text = perf.cycle()
+	)
+
+	# Soft-lock toggle (default ON)
+	var lock_btn := Button.new()
+	lock_btn.name = "LockBtn"
+	lock_btn.text = "Lock ON"
+	lock_btn.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	lock_btn.offset_left = -270
+	lock_btn.offset_top = 162
+	lock_btn.offset_right = -148
+	lock_btn.offset_bottom = 198
+	_root.add_child(lock_btn)
+	lock_btn.pressed.connect(func():
+		if _player and _player.has_method("toggle_soft_lock"):
+			_player.toggle_soft_lock()
+			lock_btn.text = "Lock ON" if bool(_player.soft_lock_on) else "Lock OFF"
+	)
+
+	_stats_lbl = Label.new()
+	_stats_lbl.name = "StatsLbl"
+	_stats_lbl.position = Vector2(12, 150)
+	_stats_lbl.size = Vector2(320, 60)
+	_stats_lbl.add_theme_font_size_override("font_size", 13)
+	_root.add_child(_stats_lbl)
 
 func bind_player(p: Node) -> void:
 	_player = p
@@ -104,7 +208,7 @@ func _apply_phone_scale() -> void:
 	var shortest := minf(sz.x, sz.y)
 	_ui_scale = clampf(shortest / 720.0, 0.85, 1.35)
 	if _hint:
-		_hint.text = "Ashcrown - stick · swipe look · hold ATK=heavy · DODGE i-frames · USE=Coilcrypt"
+		_hint.text = "Ashcrown · stick · hold ATK=heavy · DODGE · BLOCK · USE · Agent AFK"
 
 func _process(_delta: float) -> void:
 	_refresh_bars()
@@ -123,6 +227,18 @@ func _refresh_bars() -> void:
 	_foc_bar.value = c.focus
 	_heat_bar.max_value = c.max_heat
 	_heat_bar.value = c.heat
+	if _stats_lbl:
+		var atk_bonus := 0
+		var def_bonus := 0
+		if _player.has_method("get_equip_bonus"):
+			var b: Dictionary = _player.get_equip_bonus()
+			atk_bonus = int(b.get("atk", 0))
+			def_bonus = int(b.get("def", 0))
+		_stats_lbl.text = "XP %s · Gold %s · ATK+%s DEF+%s\nHeat gates skills when overheated" % [
+			_player.get("xp") if _player.get("xp") != null else 0,
+			_player.get("gold") if _player.get("gold") != null else 0,
+			atk_bonus, def_bonus
+		]
 
 func _on_afk_toggled(on: bool) -> void:
 	var afk := get_node_or_null("/root/AfkManager")
@@ -131,23 +247,43 @@ func _on_afk_toggled(on: bool) -> void:
 		_afk_btn.set_pressed_no_signal(false)
 		return
 	if on:
-		afk.start_afk("Balanced")
-		_show_toast("AFK Balanced - simulating...")
+		var prof := active_profile_name()
+		afk.start_afk(prof)
+		_afk_btn.text = "Watching"
+		_show_toast("Agent watching")
 	else:
 		var report: Dictionary = afk.stop_afk("player_cancel")
+		_afk_btn.text = "Agent"
 		_show_afk_report(report)
+		_show_toast("You have the watch")
+
+func active_profile_name() -> String:
+	var afk := get_node_or_null("/root/AfkManager")
+	if afk:
+		return str(afk.active_profile)
+	return "Balanced"
 
 func _show_afk_report(report: Dictionary) -> void:
 	_report.visible = true
-	_report_body.text = "AFK Return Report\nprofile: %s\nduration: %ss\nkills: %s\nxp: %s\ngold: %s\nstop: %s" % [
-		report.get("profile", "?"),
-		report.get("duration_sec", 0),
-		report.get("kills", 0),
-		report.get("xp_gained", 0),
-		report.get("gold_gained", 0),
-		report.get("stop_reason", ""),
-	]
+	var afk := get_node_or_null("/root/AfkManager")
+	if afk and afk.has_method("format_report_text"):
+		_report_body.text = afk.format_report_text(report)
+	else:
+		_report_body.text = "AFK complete — %s · %s\nEngagements closed: %s\nAsh-light gained: %s XP\nLedger: +%s gold\n%s" % [
+			report.get("profile", "?"),
+			report.get("mode", "?"),
+			report.get("kills", 0),
+			report.get("xp_gained", 0),
+			report.get("gold_gained", 0),
+			report.get("stop_reason_text", report.get("stop_reason", "")),
+		]
 	_afk_btn.set_pressed_no_signal(false)
+	_afk_btn.text = "Agent"
+	# Enlarge report panel for voice lines
+	_report.offset_left = -200
+	_report.offset_top = -200
+	_report.offset_right = 200
+	_report.offset_bottom = 200
 
 func _show_toast(text: String) -> void:
 	_toast.text = text
@@ -226,3 +362,185 @@ func _pinch_distance() -> float:
 	var a: Vector2 = _touch_pos.get(_pinch_ids[0], Vector2.ZERO)
 	var b: Vector2 = _touch_pos.get(_pinch_ids[1], Vector2.ZERO)
 	return a.distance_to(b)
+
+
+# --- Remappable mobile controls (0.2.1) ---------------------------------
+
+func _cache_default_layout() -> void:
+	_default_stick_offsets = {
+		"preset": _stick_base.anchors_preset,
+		"left": _stick_base.offset_left,
+		"top": _stick_base.offset_top,
+		"right": _stick_base.offset_right,
+		"bottom": _stick_base.offset_bottom,
+		"anchor_left": _stick_base.anchor_left,
+		"anchor_top": _stick_base.anchor_top,
+		"anchor_right": _stick_base.anchor_right,
+		"anchor_bottom": _stick_base.anchor_bottom,
+	}
+	if _right_cluster:
+		_default_cluster_offsets = {
+			"left": _right_cluster.offset_left,
+			"top": _right_cluster.offset_top,
+			"right": _right_cluster.offset_right,
+			"bottom": _right_cluster.offset_bottom,
+			"anchor_left": _right_cluster.anchor_left,
+			"anchor_top": _right_cluster.anchor_top,
+			"anchor_right": _right_cluster.anchor_right,
+			"anchor_bottom": _right_cluster.anchor_bottom,
+		}
+
+func _load_layout_from_save() -> void:
+	var sm := get_node_or_null("/root/SaveManager")
+	if sm and sm.has_method("get_control_layout"):
+		_layout_id = sm.get_control_layout()
+		_stick_side = sm.get_control_stick_side()
+	_apply_layout(false)
+
+func _ensure_controls_panel() -> void:
+	_controls_btn = Button.new()
+	_controls_btn.name = "ControlsBtn"
+	_controls_btn.text = "Controls"
+	_controls_btn.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	_controls_btn.offset_left = -270
+	_controls_btn.offset_top = 204
+	_controls_btn.offset_right = -148
+	_controls_btn.offset_bottom = 240
+	_root.add_child(_controls_btn)
+	_controls_btn.pressed.connect(_toggle_layout_panel)
+
+	_layout_panel = PanelContainer.new()
+	_layout_panel.name = "LayoutPanel"
+	_layout_panel.visible = false
+	_layout_panel.set_anchors_preset(Control.PRESET_CENTER)
+	_layout_panel.offset_left = -170
+	_layout_panel.offset_top = -140
+	_layout_panel.offset_right = 170
+	_layout_panel.offset_bottom = 140
+	_root.add_child(_layout_panel)
+	var v := VBoxContainer.new()
+	_layout_panel.add_child(v)
+	var title := Label.new()
+	title.text = "Mobile Controls"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	v.add_child(title)
+	var info := Label.new()
+	info.name = "LayoutInfo"
+	info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	info.text = _layout_help_text()
+	v.add_child(info)
+	var swap := Button.new()
+	swap.text = "Swap stick side"
+	swap.pressed.connect(func():
+		_stick_side = "right" if _stick_side == "left" else "left"
+		_layout_id = "left_hand" if _stick_side == "right" else "default"
+		_apply_layout(true)
+		info.text = _layout_help_text()
+	)
+	v.add_child(swap)
+	var left_hand := Button.new()
+	left_hand.text = "Left-hand layout"
+	left_hand.pressed.connect(func():
+		_layout_id = "left_hand"
+		_stick_side = "right"
+		_apply_layout(true)
+		info.text = _layout_help_text()
+	)
+	v.add_child(left_hand)
+	var reset := Button.new()
+	reset.text = "Reset defaults"
+	reset.pressed.connect(func():
+		_layout_id = "default"
+		_stick_side = "left"
+		_apply_layout(true)
+		info.text = _layout_help_text()
+	)
+	v.add_child(reset)
+	# Hide unfinished per-button drag remap (P2+)
+	var hidden := Label.new()
+	hidden.visible = false
+	hidden.text = "Per-button drag remap — coming later"
+	v.add_child(hidden)
+	var close := Button.new()
+	close.text = "Close"
+	close.pressed.connect(func(): _layout_panel.visible = false)
+	v.add_child(close)
+
+func _layout_help_text() -> String:
+	var stick := "LEFT" if _stick_side == "left" else "RIGHT"
+	var cluster := "RIGHT" if _stick_side == "left" else "LEFT"
+	return "Default: stick LEFT, buttons RIGHT.\nNow: stick %s · buttons %s\nLayout: %s" % [stick, cluster, _layout_id]
+
+func _toggle_layout_panel() -> void:
+	_layout_panel.visible = not _layout_panel.visible
+	if _layout_panel.visible:
+		var info = _layout_panel.find_child("LayoutInfo", true, false)
+		if info:
+			info.text = _layout_help_text()
+
+func _apply_layout(persist: bool) -> void:
+	if _stick_side == "left":
+		_place_stick_left()
+		_place_cluster_right()
+	else:
+		_place_stick_right()
+		_place_cluster_left()
+	if persist:
+		var sm := get_node_or_null("/root/SaveManager")
+		if sm and sm.has_method("set_control_layout"):
+			sm.set_control_layout(_layout_id, _stick_side)
+		_show_toast("Controls: stick %s" % _stick_side)
+
+func _place_stick_left() -> void:
+	_stick_base.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+	_stick_base.anchor_left = 0.0
+	_stick_base.anchor_right = 0.0
+	_stick_base.anchor_top = 1.0
+	_stick_base.anchor_bottom = 1.0
+	_stick_base.offset_left = 24.0
+	_stick_base.offset_top = -200.0
+	_stick_base.offset_right = 200.0
+	_stick_base.offset_bottom = -24.0
+	_stick_base.grow_horizontal = Control.GROW_DIRECTION_END
+	_stick_base.grow_vertical = Control.GROW_DIRECTION_BEGIN
+
+func _place_stick_right() -> void:
+	_stick_base.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	_stick_base.anchor_left = 1.0
+	_stick_base.anchor_right = 1.0
+	_stick_base.anchor_top = 1.0
+	_stick_base.anchor_bottom = 1.0
+	_stick_base.offset_left = -200.0
+	_stick_base.offset_top = -200.0
+	_stick_base.offset_right = -24.0
+	_stick_base.offset_bottom = -24.0
+	_stick_base.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	_stick_base.grow_vertical = Control.GROW_DIRECTION_BEGIN
+
+func _place_cluster_right() -> void:
+	if _right_cluster == null:
+		return
+	_right_cluster.anchor_left = 1.0
+	_right_cluster.anchor_right = 1.0
+	_right_cluster.anchor_top = 1.0
+	_right_cluster.anchor_bottom = 1.0
+	_right_cluster.offset_left = -280.0
+	_right_cluster.offset_top = -280.0
+	_right_cluster.offset_right = -12.0
+	_right_cluster.offset_bottom = -12.0
+	_right_cluster.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	_right_cluster.grow_vertical = Control.GROW_DIRECTION_BEGIN
+
+func _place_cluster_left() -> void:
+	if _right_cluster == null:
+		return
+	_right_cluster.anchor_left = 0.0
+	_right_cluster.anchor_right = 0.0
+	_right_cluster.anchor_top = 1.0
+	_right_cluster.anchor_bottom = 1.0
+	_right_cluster.offset_left = 12.0
+	_right_cluster.offset_top = -280.0
+	_right_cluster.offset_right = 280.0
+	_right_cluster.offset_bottom = -12.0
+	_right_cluster.grow_horizontal = Control.GROW_DIRECTION_END
+	_right_cluster.grow_vertical = Control.GROW_DIRECTION_BEGIN

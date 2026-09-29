@@ -8,7 +8,7 @@ Engine: **Godot 4**. Do not expand to multi-region content until this list is gr
 
 ## Content checklist
 
-- [ ] **One beautiful open-world region** (streamed, LOD'd)
+- [ ] **One beautiful open-world region** (streamed, LOD’d)
 - [ ] **One town** (vendors, quest givers, day/night schedules for key NPCs)
 - [ ] **One wilderness zone** (traversal, camps, resources)
 - [ ] **One dungeon** (authored layout, readable loop)
