@@ -1,18 +1,22 @@
 extends Node3D
-## Coilcrypt dungeon - mouth rooms + Coil Warden arena. USE near exit to leave.
+## Coilcrypt dungeon — mouth, outer-ring teach rooms, Coil Warden arena.
 
 signal exit_requested
+
+const _Teach = preload("res://Combat/TeachSentry.gd")
 
 var _boss: Node3D
 
 func _ready() -> void:
 	name = "CoilcryptRuntime"
 	_build()
+	_spawn_outer_ring_teach()
 	_spawn_boss()
 	if EventBus:
-		EventBus.hud_toast.emit("Coilcrypt - defeat the Coil Warden · USE at mouth to leave")
+		EventBus.hud_toast.emit("Coilcrypt — outer ring teaches amber/blue/red · then Coil Warden")
 
 func _build() -> void:
+	# Floor
 	var floor_b := CSGBox3D.new()
 	floor_b.size = Vector3(48, 1, 64)
 	floor_b.position = Vector3(0, -0.5, -8)
@@ -22,13 +26,18 @@ func _build() -> void:
 	floor_mat.albedo_color = Color(0.22, 0.18, 0.2)
 	floor_b.material = floor_mat
 	add_child(floor_b)
+	# Walls stub
+	var wall_mat := StandardMaterial3D.new()
+	wall_mat.albedo_color = Color(0.18, 0.14, 0.16)
 	for x in [-24, 24]:
 		var w := CSGBox3D.new()
 		w.size = Vector3(2, 6, 64)
 		w.position = Vector3(x, 3, -8)
 		w.use_collision = true
 		w.collision_layer = 1
+		w.material = wall_mat
 		add_child(w)
+	# Arena plate (north)
 	var arena := CSGCylinder3D.new()
 	arena.radius = 14.0
 	arena.height = 0.4
@@ -51,6 +60,7 @@ func _build() -> void:
 	mouth.font_size = 28
 	mouth.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	add_child(mouth)
+	# Exit zone
 	var exit_area := Area3D.new()
 	exit_area.name = "ExitZone"
 	exit_area.position = Vector3(0, 1, 18)
@@ -86,6 +96,40 @@ func _build() -> void:
 	env_node.environment = e
 	add_child(env_node)
 
+func _spawn_outer_ring_teach() -> void:
+	# Outer ring clockwise — teach telegraphs on conduit sentries before Warden
+	var ring := Node3D.new()
+	ring.name = "OuterRingTeach"
+	add_child(ring)
+	var floor_pad := CSGCylinder3D.new()
+	floor_pad.radius = 8.0
+	floor_pad.height = 0.25
+	floor_pad.position = Vector3(0, 0.12, 2)
+	floor_pad.use_collision = true
+	floor_pad.collision_layer = 1
+	var pm := StandardMaterial3D.new()
+	pm.albedo_color = Color(0.3, 0.26, 0.28)
+	floor_pad.material = pm
+	ring.add_child(floor_pad)
+	var title := Label3D.new()
+	title.text = "Outer Ring — learn telegraphs before the Warden"
+	title.position = Vector3(0, 4.5, 2)
+	title.font_size = 32
+	title.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	title.modulate = Color(0.95, 0.8, 0.45)
+	ring.add_child(title)
+	# Three sentries around the ring
+	ring.add_child(_Teach.make(_Teach.Lesson.DODGE_AMBER, Vector3(-5, 0.5, 4), "Amber Sentry"))
+	ring.add_child(_Teach.make(_Teach.Lesson.BLOCK_BLUE, Vector3(0, 0.5, 0), "Blue Sentry"))
+	ring.add_child(_Teach.make(_Teach.Lesson.UNBLOCKABLE_RED, Vector3(5, 0.5, 4), "Red Sentry"))
+	# Soft lore tablet
+	var tablet := Label3D.new()
+	tablet.text = "Amber=DODGE · Blue-white=BLOCK · Red=UNBLOCKABLE"
+	tablet.position = Vector3(0, 2.2, 6)
+	tablet.font_size = 24
+	tablet.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	ring.add_child(tablet)
+
 func _spawn_boss() -> void:
 	var script = preload("res://Combat/CoilWardenBoss.gd")
 	_boss = script.new()
@@ -101,4 +145,4 @@ func is_player_at_exit(player: Node3D) -> bool:
 	return player.global_position.distance_to(Vector3(0, 1, 18)) < 5.0
 
 func get_player_entry() -> Vector3:
-	return Vector3(0, 1.2, 12)
+	return Vector3(0, 1.2, 10)  # mouth → outer ring teach → arena north
