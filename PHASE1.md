@@ -1,18 +1,15 @@
-# Ashcrown — Phase 1 Foundation
+# Ashcrown - Phase 1 + First Playable combat slice
 
-## What's here
-- `project.godot` — Godot 4.3+, Forward Mobile renderer, autoloads EventBus + SaveManager
-- `Main/Main.tscn` — Emberveil Reach + player + touch + chunk streamer
-- `Character/PlayerController.gd` — walk/run/jump, touch stick + orbit + pinch/zoom
-- `UI/TouchControls.tscn` — stick, look zone, ATK / DODGE / S1 / S2 / JUMP / USE
-- `World/GrayboxRegion.gd` — **Emberveil Reach** landmarks (Ashfen Gate, Wilds, Coilcrypt, waystone)
-- `Save/SaveManager.gd` — JSON autosave, corruption-safe write
-- `Streaming/ChunkStreamer.gd` — neighbor chunk marker stub
-- Data stubs: `Character/Attributes.gd`, `StarterKits.gd`, `Combat/CoilWardenStub.gd`, `AFK/AfkProfiles.gd`
-- `export_presets.cfg` — Android/iOS stubs (signing TBD)
+## Playable now (debug APK 0.1.1)
+- Emberveil Reach graybox: Ashfen Gate, Waystone, Wilds, Coilcrypt mouth
+- Mobile touch: stick (deadzone), look swipe, hold ATK=heavy/charged, DODGE i-frames, BLOCK, S1/S2, JUMP, USE
+- Combat: HP/stamina/focus/heat; Vein-mites in Wilds (kill + stub loot)
+- Coilcrypt: USE at mouth -> dungeon arena; Coil Warden 3-phase stub AI with amber/blue/red telegraphs
+- Save: position, HP, kit, xp/gold persist
+- AFK toggle: Balanced profile; after ~8s shows return report (kills/xp/gold)
 
 ## Run
-Open folder in Godot 4.3+ → Play (`Main/Main.tscn`).
+Godot 4.3+ Play Main/Main.tscn, or install `build/ashcrown-debug.apk` (com.diddy674176.ashcrown).
 
-## Exit
-Walk Emberveil Reach graybox with save/load on device/emulator.
+## Not First Playable complete
+Town vendors/quests, companion, crafting, 3+ enemy roles, auto-combat, remappable controls, performance presets - see FIRST_PLAYABLE.md.
