@@ -1,12 +1,12 @@
 extends RefCounted
 class_name AfkProfiles
-## AFK profile name stubs — AFK_AGENT.md. MVP locked for §82; rest deferred.
+## AFK profile stubs — AFK_AGENT.md. MVP locked for §82.
 
-const MVP := ["EXP", "Gold", "Explore", "Balanced", "Custom"]
+const MVP := ["EXP", "Gold", "Explore", "Balanced"]
 
 const DEFERRED := [
 	"Gathering", "Boss", "Dungeon", "Quest", "Craft",
-	"Reputation", "Gear", "Companion", "Kingdom",
+	"Reputation", "Gear", "Companion", "Kingdom", "Custom",
 ]
 
 const DEFAULT_RULES := {
