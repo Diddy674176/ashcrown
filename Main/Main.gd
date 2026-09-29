@@ -19,9 +19,9 @@ func _ready() -> void:
 	EventBus.enter_dungeon_requested.connect(_on_enter_dungeon)
 	EventBus.exit_dungeon_requested.connect(_exit_coilcrypt)
 	if SaveManager and not SaveManager.has_save():
-		player.global_position = Vector3(0, 1.2, 16)
+		player.global_position = Vector3(0, 1.2, 36)
 	# Kit default Ashblade already on player; toast intro
-	EventBus.hud_toast.emit("Emberveil Reach — mites east · Coilcrypt north · MODE/AFK top-right")
+	EventBus.hud_toast.emit("0.2.1 — Wake-Pit teaches dodge/block/red · Controls remaps · day/night NPCs")
 
 func _on_player_interact(p: Node) -> void:
 	if _in_dungeon:

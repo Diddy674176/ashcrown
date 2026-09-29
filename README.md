@@ -4,7 +4,7 @@ Fully AFK-capable open-world action RPG for **mobile**, built in **Godot 4**.
 
 - **Title:** Ashcrown (final — not Aetherwake / Ashen Crown)
 - **Repo:** https://github.com/Diddy674176/ashcrown
-- **Status:** **First Playable 0.2.0 P0 green** — manual combat + 3 roles, Coil Warden 3-phase, AFK report voice · package `com.diddy674176.ashcrown`
+- **Status:** **First Playable 0.2.1** — P0 + remappable controls, day/night NPC schedules, Outer Ring / Wake-Pit teach rooms · package `com.diddy674176.ashcrown`
 
 ## Docs
 
@@ -31,7 +31,7 @@ Fully AFK-capable open-world action RPG for **mobile**, built in **Godot 4**.
 
 **Playable in editor (Godot 4.3+):** open `project.godot` → run Main → walk graybox Emberveil Reach with keyboard (WASD + mouse look) or on-screen touch stick/buttons. Autosave stub on pause/close.
 
-**Playable on device (0.2.0 APK):** manual combat (light/heavy/dodge/block/skills + heat gate), Vein-mite / Wake-warped Stag / Conduit Wisp, Coil Warden 3 phases + Circlet Fragment, AFK EXP/Gold/Explore/Balanced + AFK_REPORT_VOICE return UI, Ashfen Len/vendors/Ember Camp, Assisted/Full Auto, Rook after Len, Mid/Battery Saver. Still stub/hidden: remappable controls UI, day/night schedules, dig/seal quest choice, cloud AFK, final art.
+**Playable on device (0.2.1 APK):** 0.2.0 P0 intact + **Controls** remap (stick side / left-hand, persisted), Ashfen Gate day/night schedules (Len/Sera/Brann/Cald/Rook/Vos), Wake-Pit + Coilcrypt Outer Ring teach rooms (amber/blue/red). Still stub/hidden: per-button drag remap, dig/seal quest choice, cloud AFK, final art.
 
 **Locked names in scenes:** Emberveil Reach · Ashfen Gate · Coilcrypt · Coil Warden · Singing Root · Gray Concord waystone.
 
