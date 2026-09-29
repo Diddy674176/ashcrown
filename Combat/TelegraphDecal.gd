@@ -1,6 +1,7 @@
 extends Node3D
 class_name TelegraphDecal
-## Phone-readable attack tell - mesh/decal, not particle-only (COMBAT.md).
+## Phone-readable attack tell - mesh/decal, not particle-only (COMBAT.md §4).
+## Color language: amber dodge / blue-white block / red unblockable.
 
 enum Kind { DODGE_AMBER, BLOCK_BLUE, UNBLOCKABLE_RED, AOE_AMBER }
 
@@ -18,6 +19,7 @@ var _age: float = 0.0
 var _mesh: MeshInstance3D
 
 func _ready() -> void:
+	add_to_group("telegraph")
 	_mesh = MeshInstance3D.new()
 	var cyl := CylinderMesh.new()
 	cyl.top_radius = radius
@@ -38,16 +40,20 @@ func _process(delta: float) -> void:
 	if _mesh and _mesh.material_override:
 		var c: Color = COLORS.get(kind, Color.ORANGE)
 		c.a = lerpf(0.25, 0.75, t)
+		# Commit flash: amber → red for AoE
 		if kind == Kind.AOE_AMBER and t > 0.7:
 			c = c.lerp(Color(1, 0.15, 0.1, 0.8), (t - 0.7) / 0.3)
 		(_mesh.material_override as StandardMaterial3D).albedo_color = c
+		# Slight pulse scale for phone readability
+		var s := lerpf(0.92, 1.08, sin(t * PI))
+		_mesh.scale = Vector3(s, 1.0, s)
 	if _age >= duration:
 		queue_free()
 
 static func spawn(parent: Node, pos: Vector3, p_kind: Kind, p_duration: float, p_radius: float = 2.5) -> TelegraphDecal:
 	var t := TelegraphDecal.new()
 	t.kind = p_kind
-	t.duration = p_duration
+	t.duration = maxf(p_duration, 0.45)  # Mid readability floor
 	t.radius = p_radius
 	parent.add_child(t)
 	t.global_position = pos + Vector3(0, 0.05, 0)
