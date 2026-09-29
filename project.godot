@@ -1,5 +1,5 @@
 ; Engine configuration file.
-; Godot 4.3+ — Ashcrown Phase 1 scaffold
+; Godot 4.3+ - Ashcrown Phase 1 scaffold
 ; https://github.com/Diddy674176/ashcrown
 
 config_version=5
@@ -8,7 +8,7 @@ config_version=5
 
 config/name="Ashcrown"
 config/description="Mobile AFK open-world action RPG"
-config/version="0.1.0-phase1"
+config/version="0.1.1-playable"
 run/main_scene="res://Main/Main.tscn"
 config/features=PackedStringArray("4.3", "Forward Mobile")
 config/icon="res://icon.svg"
@@ -17,6 +17,7 @@ config/icon="res://icon.svg"
 
 EventBus="*res://Core/EventBus.gd"
 SaveManager="*res://Save/SaveManager.gd"
+AfkManager="*res://AFK/AfkManager.gd"
 
 [display]
 
