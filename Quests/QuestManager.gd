@@ -114,6 +114,9 @@ func apply_consequence(kind: String) -> void:
 			EventBus.quest_flag_set.emit(&"helped_concord", true)
 		# Reward rare Concord Mail via player if available
 		_reward_player("concord_mail")
+		var ws := get_node_or_null("/root/WorldSim")
+		if ws and ws.has_method("on_quest_consequence"):
+			ws.on_quest_consequence("helped_concord")
 	elif kind == "ignored_scar":
 		consequence_flag = "ignored_scar"
 		set_flag("ignored_scar_alarm", true)
@@ -122,6 +125,9 @@ func apply_consequence(kind: String) -> void:
 		if EventBus:
 			EventBus.hud_toast.emit("Len: Scar alarm ignored. No Concord favor.")
 			EventBus.quest_flag_set.emit(&"ignored_scar", true)
+		var ws2 := get_node_or_null("/root/WorldSim")
+		if ws2 and ws2.has_method("on_quest_consequence"):
+			ws2.on_quest_consequence("ignored_scar")
 
 func complete_aftermath() -> void:
 	if stage == 3:
@@ -145,6 +151,9 @@ func try_ignore_consequence() -> void:
 	if stage > 0 and stage < 3 and consequence_flag == "":
 		consequence_flag = "ignored_scar"
 		set_flag("ignored_scar_alarm", true)
+		var ws3 := get_node_or_null("/root/WorldSim")
+		if ws3 and ws3.has_method("on_quest_consequence"):
+			ws3.on_quest_consequence("ignored_scar")
 
 func _on_enemy_killed(enemy: Node, _drops: Dictionary) -> void:
 	if stage != 1:
