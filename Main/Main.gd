@@ -25,7 +25,10 @@ func _ready() -> void:
 	EventBus.exit_dungeon_requested.connect(_exit_coilcrypt)
 	if SaveManager and not SaveManager.has_save():
 		player.global_position = Vector3(0, 1.2, 36)
-	EventBus.hud_toast.emit("0.3.0 — Inventory/Attrs/Skills · Len choice · equip power")
+	EventBus.hud_toast.emit("0.5.0 — World sim LOD · factions · Emberveil biomes · events")
+	var ws0 := get_node_or_null("/root/WorldSim")
+	if ws0 and ws0.has_method("bind_player"):
+		ws0.bind_player(player)
 
 func _mount_rpg_ui() -> void:
 	var inv = _InventoryPanel.new()
@@ -67,6 +70,9 @@ func _enter_coilcrypt() -> void:
 	if qm and qm.has_method("try_ignore_consequence"):
 		qm.try_ignore_consequence()
 	_in_dungeon = true
+	var ws := get_node_or_null("/root/WorldSim")
+	if ws and ws.has_method("set_player_elsewhere"):
+		ws.set_player_elsewhere(true, "Coilcrypt")
 	if region:
 		region.visible = false
 		region.process_mode = Node.PROCESS_MODE_DISABLED
@@ -86,6 +92,9 @@ func _exit_coilcrypt() -> void:
 	if _dungeon and is_instance_valid(_dungeon):
 		_dungeon.queue_free()
 		_dungeon = null
+	var wsx := get_node_or_null("/root/WorldSim")
+	if wsx and wsx.has_method("set_player_elsewhere"):
+		wsx.set_player_elsewhere(false)
 	if region:
 		region.visible = true
 		region.process_mode = Node.PROCESS_MODE_INHERIT

@@ -33,3 +33,7 @@ signal attributes_changed
 signal skills_changed
 signal dialogue_opened(tree_id: String)
 signal dialogue_closed(tree_id: String)
+signal faction_rep_changed(faction: String, value: int)
+signal world_event_changed(event_id: String)
+signal world_lod_changed(lod: int)
+signal world_sim_return(summary: Dictionary)

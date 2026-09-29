@@ -2,7 +2,7 @@
 
 **APK:** `ashcrown-debug.apk` (same folder as this file)  
 **Package ID:** `com.diddy674176.ashcrown`  
-**Version:** 0.2.1 (versionCode 4)  
+**Version:** 0.5.0 (versionCode 7)  
 **ABI:** arm64-v8a (modern phones)  
 **Min SDK:** 21 · **Target SDK:** 34  
 **Signing:** Android debug keystore (dev only — not Play Store)

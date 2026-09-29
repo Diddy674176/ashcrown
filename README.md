@@ -4,7 +4,7 @@ Fully AFK-capable open-world action RPG for **mobile**, built in **Godot 4**.
 
 - **Title:** Ashcrown (final — not Aetherwake / Ashen Crown)
 - **Repo:** https://github.com/Diddy674176/ashcrown
-- **Status:** **0.4.0 Phase 4 AFK** — agent loop + offline sim + truthful report; Phase 3 RPG intact · package `com.diddy674176.ashcrown`
+- **Status:** **0.5.0 Phase 5 World** — biomes, factions, events, economy stubs, sim LOD; Phases 1–4 intact · package `com.diddy674176.ashcrown`
 
 ## Docs
 
@@ -31,7 +31,7 @@ Fully AFK-capable open-world action RPG for **mobile**, built in **Godot 4**.
 
 **Playable in editor (Godot 4.3+):** open `project.godot` → run Main → walk graybox Emberveil Reach with keyboard (WASD + mouse look) or on-screen touch stick/buttons. Autosave stub on pause/close.
 
-**Playable on device (0.4.0 APK):** 0.2.0 P0 intact + **Controls** remap (stick side / left-hand, persisted), Ashfen Gate day/night schedules (Len/Sera/Brann/Cald/Rook/Vos), Wake-Pit + Coilcrypt Outer Ring teach rooms (amber/blue/red). Still stub/hidden: per-button drag remap, dig/seal quest choice, cloud AFK, final art.
+**Playable on device (0.5.0 APK):** 0.4.0 AFK intact + Emberveil multi-biome pads, faction reputation, rotating world events, economy price stubs, WorldSim LOD (town can change while in Coilcrypt/AFK). Still stub/hidden: dig/seal quest choice depth, cloud AFK, final art, Phase 6+ systems.
 
 **Locked names in scenes:** Emberveil Reach · Ashfen Gate · Coilcrypt · Coil Warden · Singing Root · Gray Concord waystone.
 
@@ -40,5 +40,5 @@ Fully AFK-capable open-world action RPG for **mobile**, built in **Godot 4**.
 TBD by Bob.
 
 
-## Phase 4
-See PHASE4.md — AFK agent loop, offline sim, truthful return report.
+## Phase 4–5
+See PHASE4.md (AFK) and PHASE5.md (World sim LOD / factions / events).
